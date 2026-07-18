@@ -7,11 +7,10 @@
     <style>
       :root {
         color-scheme: light;
-        --paper: #f8f8f5;
-        --piece: #eeeeee;
-        --piece-overlap: 24;
-        --line: #6a6a6a;
-        --outer: #0c0c0c;
+        --page: #f6f7f9;
+        --ink: #050505;
+        --piece: #ffffff;
+        --piece-hover: #eef3ff;
       }
 
       * {
@@ -27,93 +26,69 @@
       body {
         display: grid;
         place-items: center;
-        padding: clamp(12px, 3vw, 28px);
-        background: var(--paper);
-        font-family: Arial, "Noto Sans KR", sans-serif;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.85), transparent 28rem),
+          var(--page);
+        font-family:
+          Arial,
+          "Noto Sans KR",
+          sans-serif;
       }
 
       main {
-        width: min(94vw, 660px);
-        height: min(96vh, 1120px);
+        width: 100vw;
+        height: 100vh;
         display: grid;
         place-items: center;
+        padding: clamp(12px, 2.6vw, 32px);
       }
 
       svg {
-        width: 100%;
-        height: 100%;
-        max-height: 100%;
+        width: min(94vw, 760px);
+        height: min(96vh, 980px);
+        display: block;
         overflow: visible;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        filter: drop-shadow(0 14px 26px rgba(26, 31, 38, 0.12));
       }
 
-      .piece,
-      .piece path {
-        fill: var(--piece-fill, var(--piece));
-        stroke: var(--piece-fill, var(--piece));
-        stroke-width: var(--piece-overlap);
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-miterlimit: 1;
-        paint-order: stroke fill;
+      .lattice {
+        fill: var(--ink);
+        fill-rule: evenodd;
+        pointer-events: none;
+      }
+
+      .piece {
+        fill: var(--piece);
+        stroke: none;
         cursor: pointer;
+        pointer-events: visiblePainted;
+        -webkit-tap-highlight-color: transparent;
         transition:
-          fill 180ms ease,
-          stroke 180ms ease,
-          filter 180ms ease;
+          fill 160ms ease,
+          filter 160ms ease;
       }
 
-      .piece:hover,
-      .piece:focus-visible,
-      .piece:hover path,
-      .piece:focus-visible path {
-        filter: brightness(0.97);
+      .piece:not(.is-locked):hover {
+        fill: var(--piece-hover);
       }
 
+      .piece:focus,
       .piece:focus-visible {
         outline: none;
       }
 
-      .piece.is-locked,
-      .piece.is-locked path {
-        cursor: default;
+      .load-error {
+        max-width: min(88vw, 28rem);
+        color: #2d3138;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        text-align: center;
       }
 
-      .map-fill {
-        fill: var(--piece);
-        pointer-events: none;
-      }
-
-      .inner-line {
-        fill: none;
-        stroke: var(--line);
-        stroke-width: 3;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-dasharray: 9 9;
-        pointer-events: none;
-      }
-
-      .outer-line {
-        fill: none;
-        stroke: var(--outer);
-        stroke-width: 6;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-miterlimit: 1;
-        pointer-events: none;
-      }
-
-      .number {
-        fill: #050505;
-        font-size: 42px;
-        font-weight: 400;
-        text-anchor: middle;
-        dominant-baseline: central;
-        pointer-events: none;
-        user-select: none;
-      }
-
+      .is-hidden,
       .sr-only {
         position: absolute;
         width: 1px;
@@ -130,605 +105,133 @@
   <body>
     <main>
       <svg
-        viewBox="0 0 960 1640"
+        id="puzzle"
+        viewBox="0 0 800 1024"
         role="img"
         aria-labelledby="map-title map-desc"
       >
-        <title id="map-title">한반도 퍼즐 지도</title>
-        <desc id="map-desc">20개 조각으로 나뉜 한반도 퍼즐 지도입니다.</desc>
-
-        <defs>
-          <path
-            id="mainland-outline-shape"
-            d="M833 210
-             C858 196 891 178 916 162
-             C920 144 921 131 939 119
-             C952 110 939 88 913 68
-             C904 43 881 8 855 7
-             C834 7 814 40 816 60
-             C816 80 803 93 781 92
-             C748 88 735 128 722 160
-             C705 160 697 149 674 149
-             C616 151 569 160 574 199
-             C578 231 603 270 591 287
-             C575 309 538 306 506 291
-             C485 282 470 260 447 257
-             C402 248 389 192 363 184
-             C355 241 331 288 304 325
-             C258 362 172 394 118 421
-             C89 433 73 450 67 470
-             C51 493 24 478 17 512
-             C4 567 9 576 88 576
-             C125 582 131 610 157 645
-             C162 684 140 722 122 762
-             C116 779 113 793 122 802
-             C94 816 83 846 52 867
-             C31 881 32 906 72 919
-             C116 923 157 933 201 929
-             C230 940 273 941 262 984
-             C258 1006 281 1014 308 1001
-             C329 991 339 1009 323 1031
-             C307 1053 269 1066 261 1097
-             C286 1096 318 1121 326 1159
-             C340 1197 334 1235 315 1281
-             C317 1298 319 1313 316 1329
-             C298 1390 290 1451 291 1491
-             C326 1507 355 1514 383 1486
-             C416 1464 461 1459 516 1464
-             C540 1442 575 1432 617 1448
-             C667 1455 704 1432 731 1394
-             C741 1385 750 1376 766 1365
-             C808 1352 821 1310 834 1264
-             C837 1217 819 1203 803 1160
-             C800 1137 801 1106 787 1068
-             C763 1017 735 984 706 925
-             C695 914 685 892 671 872
-             C637 831 598 776 553 745
-             C538 712 526 656 548 617
-             C563 617 586 615 615 599
-             C667 570 710 520 724 464
-             C783 455 845 416 836 360
-             C829 313 818 252 833 210 Z"
-          />
-          <path
-            id="jeju-outline-shape"
-            d="M426 1534
-             C464 1513 522 1511 550 1542
-             C574 1568 559 1603 528 1620
-             C493 1634 465 1614 432 1614
-             C398 1614 382 1597 391 1568
-             C397 1550 409 1542 426 1534 Z"
-          />
-          <path
-            id="ulleung-outline-shape"
-            d="M812 890
-             C831 873 855 879 855 905
-             C860 933 834 948 812 930
-             C792 916 795 900 812 890 Z"
-          />
-          <path
-            id="dokdo-outline-shape"
-            d="M881 899
-             C900 897 916 913 909 934
-             C892 939 875 931 878 910
-             C879 905 879 902 881 899 Z"
-          />
-          <clipPath id="map-clip" clipPathUnits="userSpaceOnUse">
-            <use href="#mainland-outline-shape" />
-            <use href="#jeju-outline-shape" />
-            <use href="#ulleung-outline-shape" />
-            <use href="#dokdo-outline-shape" />
-          </clipPath>
-        </defs>
-
-        <rect
-          class="map-fill"
-          x="0"
-          y="0"
-          width="960"
-          height="1640"
-          clip-path="url(#map-clip)"
-          aria-hidden="true"
-        />
-
-        <g id="pieces" clip-path="url(#map-clip)">
-          <path
-            class="piece"
-            data-piece="1"
-            tabindex="0"
-            role="button"
-            aria-label="1번 조각"
-            d="M833 210
-             C858 196 891 178 916 162
-             C920 144 921 131 939 119
-             C952 110 939 88 913 68
-             C904 43 881 8 855 7
-             C834 7 814 40 816 60
-             C816 80 803 93 781 92
-             C748 88 735 128 722 160
-             L758 201
-             L833 210 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="2"
-            tabindex="0"
-            role="button"
-            aria-label="2번 조각"
-            d="M833 210
-             C818 252 829 313 836 360
-             C845 416 783 455 724 464
-             L674 423
-             C682 382 707 350 728 320
-             C747 292 747 236 758 201
-             L833 210 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="3"
-            tabindex="0"
-            role="button"
-            aria-label="3번 조각"
-            d="M506 291
-             C538 306 575 309 591 287
-             C603 270 578 231 574 199
-             C569 160 616 151 674 149
-             C697 149 705 160 722 160
-             L758 201
-             C747 236 747 292 728 320
-             C707 350 682 382 674 423
-             L610 426
-             L532 383
-             L506 291 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="4"
-            tabindex="0"
-            role="button"
-            aria-label="4번 조각"
-            d="M304 325
-             C331 288 355 241 363 184
-             C389 192 402 248 447 257
-             C470 260 485 282 506 291
-             L532 383
-             C488 420 434 445 371 438
-             C362 387 334 355 304 325 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="5"
-            tabindex="0"
-            role="button"
-            aria-label="5번 조각"
-            d="M118 421
-             C172 394 258 362 304 325
-             C334 355 362 387 371 438
-             C350 459 329 480 324 550
-             L290 574
-             C269 534 232 505 179 482
-             C140 464 124 449 118 421 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="6"
-            tabindex="0"
-            role="button"
-            aria-label="6번 조각"
-            d="M118 421
-             C89 433 73 450 67 470
-             C51 493 24 478 17 512
-             C4 567 9 576 88 576
-             C125 582 131 610 157 645
-             C196 643 236 632 263 621
-             C270 604 279 588 290 574
-             C269 534 232 505 179 482
-             C140 464 124 449 118 421 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="7"
-            tabindex="0"
-            role="button"
-            aria-label="7번 조각"
-            d="M371 438
-             C434 445 488 420 532 383
-             L610 426
-             C589 488 577 503 548 519
-             C530 529 522 548 514 577
-             C478 584 442 594 405 602
-             C376 592 348 570 324 550
-             C329 480 350 459 371 438 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="8"
-            tabindex="0"
-            role="button"
-            aria-label="8번 조각"
-            d="M610 426
-             L674 423
-             L724 464
-             C710 520 667 570 615 599
-             C586 615 563 617 548 617
-             C544 591 533 573 514 577
-             C522 548 530 529 548 519
-             C577 503 589 488 610 426 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="9"
-            tabindex="0"
-            role="button"
-            aria-label="9번 조각"
-            d="M324 550
-             C348 570 376 592 405 602
-             C442 594 478 584 514 577
-             C533 573 544 591 548 617
-             C526 656 538 712 553 745
-             C530 773 500 792 466 824
-             C413 799 365 793 313 772
-             C329 716 346 688 335 667
-             C314 632 314 594 324 550 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="10"
-            tabindex="0"
-            role="button"
-            aria-label="10번 조각"
-            d="M157 645
-             C162 684 140 722 122 762
-             C116 779 113 793 122 802
-             C167 824 217 829 267 838
-             C287 817 301 795 313 772
-             C329 716 346 688 335 667
-             C314 632 314 594 324 550
-             L290 574
-             C279 588 270 604 263 621
-             C236 632 196 643 157 645 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="11"
-            tabindex="0"
-            role="button"
-            aria-label="11번 조각"
-            d="M267 838
-             C287 817 301 795 313 772
-             C365 793 413 799 466 824
-             C466 865 467 901 472 934
-             C442 970 424 1024 356 1015
-             C322 1011 291 1003 262 984
-             C280 929 285 873 267 838 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="12"
-            tabindex="0"
-            role="button"
-            aria-label="12번 조각"
-            d="M122 802
-             C94 816 83 846 52 867
-             C31 881 32 906 72 919
-             C116 923 157 933 201 929
-             C230 940 273 941 262 984
-             C280 929 285 873 267 838
-             C217 829 167 824 122 802 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="13"
-            tabindex="0"
-            role="button"
-            aria-label="13번 조각"
-            d="M553 745
-             C598 776 637 831 671 872
-             C685 892 695 914 706 925
-             C678 943 650 956 630 972
-             C600 990 565 994 532 987
-             C509 957 493 951 472 934
-             C467 901 466 865 466 824
-             C500 792 530 773 553 745 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="14"
-            tabindex="0"
-            role="button"
-            aria-label="14번 조각"
-            d="M472 934
-             C493 951 509 957 532 987
-             C565 994 600 990 630 972
-             C624 1018 621 1070 628 1120
-             C583 1197 551 1174 514 1159
-             C423 1117 348 1056 328 974
-             C338 1010 357 1018 391 1016
-             C432 1014 450 970 472 934 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="15"
-            tabindex="0"
-            role="button"
-            aria-label="15번 조각"
-            d="M706 925
-             C735 984 763 1017 787 1068
-             C801 1106 800 1137 803 1160
-             C791 1157 773 1153 753 1153
-             C709 1154 668 1140 628 1120
-             C621 1070 624 1018 630 972
-             C650 956 678 943 706 925 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="16"
-            tabindex="0"
-            role="button"
-            aria-label="16번 조각"
-            d="M328 974
-             C348 1056 423 1117 514 1159
-             C512 1206 512 1256 521 1302
-             C445 1295 373 1291 315 1281
-             C334 1235 340 1197 326 1159
-             C318 1121 286 1096 261 1097
-             C255 1075 269 1049 310 1039
-             C330 1012 328 974 328 974 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="17"
-            tabindex="0"
-            role="button"
-            aria-label="17번 조각"
-            d="M628 1120
-             C668 1140 709 1154 753 1153
-             C773 1153 791 1157 803 1160
-             C819 1203 837 1217 834 1264
-             C821 1310 808 1352 766 1365
-             C750 1376 741 1385 731 1394
-             C713 1355 682 1308 651 1310
-             C603 1314 563 1329 521 1302
-             C512 1256 512 1206 514 1159
-             C551 1174 583 1197 628 1120 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="18"
-            tabindex="0"
-            role="button"
-            aria-label="18번 조각"
-            d="M315 1281
-             C373 1291 445 1295 521 1302
-             C563 1329 603 1314 651 1310
-             C682 1308 713 1355 731 1394
-             C704 1432 667 1455 617 1448
-             C575 1432 540 1442 516 1464
-             C461 1459 416 1464 383 1486
-             C355 1514 326 1507 291 1491
-             C290 1451 298 1390 316 1329
-             C319 1313 317 1298 315 1281 Z"
-          />
-
-          <path
-            class="piece"
-            data-piece="19"
-            tabindex="0"
-            role="button"
-            aria-label="19번 조각"
-            d="M426 1534
-             C464 1513 522 1511 550 1542
-             C574 1568 559 1603 528 1620
-             C493 1634 465 1614 432 1614
-             C398 1614 382 1597 391 1568
-             C397 1550 409 1542 426 1534 Z"
-          />
-
-          <g
-            class="piece"
-            data-piece="20"
-            tabindex="0"
-            role="button"
-            aria-label="20번 조각"
-          >
-            <path
-              d="M812 890
-                   C831 873 855 879 855 905
-                   C860 933 834 948 812 930
-                   C792 916 795 900 812 890 Z"
-            />
-            <path
-              d="M881 899
-                   C900 897 916 913 909 934
-                   C892 939 875 931 878 910
-                   C879 905 879 902 881 899 Z"
-            />
-          </g>
-        </g>
-
-        <g aria-hidden="true">
-          <path class="inner-line" d="M722 160 L758 201 L833 210" />
-          <path
-            class="inner-line"
-            d="M758 201 C747 236 747 292 728 320 C707 350 682 382 674 423"
-          />
-          <path class="inner-line" d="M674 423 L724 464" />
-          <path class="inner-line" d="M506 291 L532 383" />
-          <path class="inner-line" d="M532 383 L610 426 L674 423" />
-          <path class="inner-line" d="M304 325 C334 355 362 387 371 438" />
-          <path class="inner-line" d="M371 438 C434 445 488 420 532 383" />
-          <path
-            class="inner-line"
-            d="M118 421 C124 449 140 464 179 482 C232 505 269 534 290 574"
-          />
-          <path class="inner-line" d="M371 438 C350 459 329 480 324 550" />
-          <path
-            class="inner-line"
-            d="M157 645 C196 643 236 632 263 621 C270 604 279 588 290 574 L324 550"
-          />
-          <path
-            class="inner-line"
-            d="M324 550 C348 570 376 592 405 602 C442 594 478 584 514 577"
-          />
-          <path
-            class="inner-line"
-            d="M514 577 C522 548 530 529 548 519 C577 503 589 488 610 426"
-          />
-          <path
-            class="inner-line"
-            d="M324 550 C314 594 314 632 335 667 C346 688 329 716 313 772"
-          />
-          <path class="inner-line" d="M548 617 C526 656 538 712 553 745" />
-          <path class="inner-line" d="M313 772 C365 793 413 799 466 824" />
-          <path class="inner-line" d="M553 745 C530 773 500 792 466 824" />
-          <path class="inner-line" d="M122 802 C167 824 217 829 267 838" />
-          <path class="inner-line" d="M267 838 C287 817 301 795 313 772" />
-          <path class="inner-line" d="M267 838 C285 873 280 929 262 984" />
-          <path class="inner-line" d="M466 824 C466 865 467 901 472 934" />
-          <path class="inner-line" d="M472 934 C493 951 509 957 532 987" />
-          <path
-            class="inner-line"
-            d="M532 987 C565 994 600 990 630 972 C650 956 678 943 706 925"
-          />
-          <path
-            class="inner-line"
-            d="M472 934 C450 970 432 1014 391 1016 C357 1018 338 1010 328 974"
-          />
-          <path class="inner-line" d="M328 974 C348 1056 423 1117 514 1159" />
-          <path class="inner-line" d="M532 987 C512 1020 510 1084 514 1159" />
-          <path class="inner-line" d="M630 972 C624 1018 621 1070 628 1120" />
-          <path
-            class="inner-line"
-            d="M628 1120 C668 1140 709 1154 753 1153 C773 1153 791 1157 803 1160"
-          />
-          <path class="inner-line" d="M628 1120 C583 1197 551 1174 514 1159" />
-          <path class="inner-line" d="M514 1159 C512 1206 512 1256 521 1302" />
-          <path class="inner-line" d="M315 1281 C373 1291 445 1295 521 1302" />
-          <path
-            class="inner-line"
-            d="M521 1302 C563 1329 603 1314 651 1310 C682 1308 713 1355 731 1394"
-          />
-        </g>
-
-        <g aria-hidden="true">
-          <use class="outer-line" href="#mainland-outline-shape" />
-          <use class="outer-line" href="#jeju-outline-shape" />
-          <use class="outer-line" href="#ulleung-outline-shape" />
-          <use class="outer-line" href="#dokdo-outline-shape" />
-        </g>
-
-        <g aria-hidden="true">
-          <text class="number" data-piece="1" x="823" y="145">1</text>
-          <text class="number" data-piece="2" x="761" y="339">2</text>
-          <text class="number" data-piece="3" x="644" y="292">3</text>
-          <text class="number" data-piece="4" x="415" y="352">4</text>
-          <text class="number" data-piece="5" x="254" y="436">5</text>
-          <text class="number" data-piece="6" x="149" y="552">6</text>
-          <text class="number" data-piece="7" x="453" y="507">7</text>
-          <text class="number" data-piece="8" x="628" y="524">8</text>
-          <text class="number" data-piece="9" x="427" y="701">9</text>
-          <text class="number" data-piece="10" x="232" y="746">10</text>
-          <text class="number" data-piece="11" x="364" y="894">11</text>
-          <text class="number" data-piece="12" x="164" y="899">12</text>
-          <text class="number" data-piece="13" x="573" y="877">13</text>
-          <text class="number" data-piece="14" x="483" y="1071">14</text>
-          <text class="number" data-piece="15" x="689" y="1078">15</text>
-          <text class="number" data-piece="16" x="417" y="1244">16</text>
-          <text class="number" data-piece="17" x="642" y="1238">17</text>
-          <text class="number" data-piece="18" x="515" y="1392">18</text>
-          <text class="number" data-piece="19" x="466" y="1571">19</text>
-          <text class="number" data-piece="20" x="850" y="849">20</text>
-        </g>
+        <title id="map-title">한반도 137조각 퍼즐</title>
+        <desc id="map-desc">참고 SVG의 외곽선과 137개 조각을 유지한 클릭 가능한 퍼즐 지도입니다.</desc>
+        <path id="lattice" class="lattice" aria-hidden="true"></path>
+        <g id="piece-layer"></g>
       </svg>
+      <p id="load-error" class="load-error is-hidden" role="status">
+        koreapuzzle.svg를 불러올 수 없습니다. 로컬 서버에서 index.html을 열어 주세요.
+      </p>
     </main>
     <p id="status" class="sr-only" aria-live="polite"></p>
 
     <script>
-      const colors = [
-        "#ef6f6c",
-        "#f0a04b",
-        "#f5cf5c",
-        "#8fca5a",
-        "#4fb477",
-        "#41b8a6",
-        "#43a7cf",
-        "#5b8def",
-        "#8374d8",
-        "#b26cd5",
-        "#de6eb1",
-        "#e06f88",
-        "#b88652",
-        "#98a55f",
-        "#5ea078",
-        "#4f9aa3",
-        "#668ac8",
-        "#9676b5",
-        "#d37f60",
-        "#84a1a8",
-      ];
-      const randomValues = Array.from(
-        { length: 20 },
-        (_, index) => (index + 1) * 10,
-      );
-      const status = document.querySelector("#status");
+      const EXPECTED_PIECE_COUNT = 137;
+      const SVG_NS = "http://www.w3.org/2000/svg";
 
-      function randomMultipleOfTen() {
-        const index = Math.floor(Math.random() * randomValues.length);
-        return randomValues[index];
+      const puzzle = document.querySelector("#puzzle");
+      const lattice = document.querySelector("#lattice");
+      const pieceLayer = document.querySelector("#piece-layer");
+      const loadError = document.querySelector("#load-error");
+      const status = document.querySelector("#status");
+      const usedColors = new Set();
+
+      function splitSubpaths(pathData) {
+        return pathData
+          .trim()
+          .match(/M[\s\S]*?(?=\s*M|$)/g)
+          .map((path) => path.trim())
+          .filter(Boolean);
       }
 
-      function activatePiece(piece) {
+      function randomColor() {
+        let color = "";
+
+        do {
+          const hue = Math.floor(Math.random() * 360);
+          const saturation = 58 + Math.floor(Math.random() * 22);
+          const lightness = 48 + Math.floor(Math.random() * 18);
+          color = `hsl(${hue} ${saturation}% ${lightness}%)`;
+        } while (usedColors.has(color));
+
+        usedColors.add(color);
+        return color;
+      }
+
+      function lockPiece(piece) {
         if (piece.classList.contains("is-locked")) {
           return;
         }
 
-        const id = Number(piece.dataset.piece);
-        const nextNumber = randomMultipleOfTen();
-        const label = document.querySelector(`.number[data-piece="${id}"]`);
+        const color = randomColor();
+        const number = piece.dataset.piece;
 
-        piece.style.setProperty("--piece-fill", colors[id - 1]);
+        piece.style.fill = color;
         piece.classList.add("is-locked");
         piece.setAttribute("aria-disabled", "true");
-        piece.setAttribute(
-          "aria-label",
-          `${id}번 조각 선택됨, 숫자 ${nextNumber}`,
-        );
-
-        if (label) {
-          label.textContent = nextNumber;
-        }
-
-        status.textContent = `${id}번 조각이 선택되어 ${nextNumber}(으)로 변경되었습니다.`;
+        piece.setAttribute("tabindex", "-1");
+        piece.setAttribute("aria-label", `${number}번 조각 선택됨`);
+        status.textContent = `${number}번 조각의 색상이 변경되었습니다.`;
       }
 
-      document.querySelectorAll(".piece[data-piece]").forEach((piece) => {
-        piece.addEventListener("click", () => activatePiece(piece));
+      function createPiece(pathData, index) {
+        const piece = document.createElementNS(SVG_NS, "path");
+        const number = String(index + 1);
+
+        piece.classList.add("piece");
+        piece.dataset.piece = number;
+        piece.setAttribute("d", pathData);
+        piece.setAttribute("role", "button");
+        piece.setAttribute("tabindex", "0");
+        piece.setAttribute("aria-label", `${number}번 조각`);
+
+        piece.addEventListener("click", () => lockPiece(piece));
         piece.addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") {
             return;
           }
 
           event.preventDefault();
-          activatePiece(piece);
+          lockPiece(piece);
         });
-      });
+
+        return piece;
+      }
+
+      async function loadPuzzle() {
+        try {
+          const response = await fetch("koreapuzzle.svg", { cache: "no-store" });
+
+          if (!response.ok) {
+            throw new Error(`SVG load failed: ${response.status}`);
+          }
+
+          const source = await response.text();
+          const documentSvg = new DOMParser().parseFromString(source, "image/svg+xml");
+          const sourcePath = documentSvg.querySelector("path");
+          const sourceSvg = documentSvg.querySelector("svg");
+
+          if (!sourcePath || !sourceSvg) {
+            throw new Error("SVG path not found");
+          }
+
+          const viewBox = sourceSvg.getAttribute("viewBox") || "0 0 800 1024";
+          const subpaths = splitSubpaths(sourcePath.getAttribute("d"));
+          const pieces = subpaths.slice(1);
+
+          if (pieces.length !== EXPECTED_PIECE_COUNT) {
+            console.warn(`Expected ${EXPECTED_PIECE_COUNT} pieces, found ${pieces.length}.`);
+          }
+
+          puzzle.setAttribute("viewBox", viewBox);
+          lattice.setAttribute("d", subpaths.join(" "));
+          pieceLayer.replaceChildren(...pieces.map(createPiece));
+
+          status.textContent = `${pieces.length}개의 퍼즐 조각이 준비되었습니다.`;
+        } catch (error) {
+          console.error(error);
+          puzzle.classList.add("is-hidden");
+          loadError.classList.remove("is-hidden");
+        }
+      }
+
+      loadPuzzle();
     </script>
   </body>
 </html>
