@@ -3,14 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>한반도 퍼즐</title>
+    <title>한반도 땅따먹기</title>
     <style>
       :root {
         color-scheme: light;
-        --page: #f6f7f9;
+        --page: #f4f6f8;
+        --panel: #ffffff;
         --ink: #050505;
+        --text: #171a1f;
+        --muted: #6b7280;
+        --line: #d9dee7;
         --piece: #ffffff;
         --piece-hover: #eef3ff;
+        --danger: #c93333;
       }
 
       * {
@@ -24,29 +29,48 @@
       }
 
       body {
-        display: grid;
-        place-items: center;
-        overflow: hidden;
+        height: 100dvh;
+        overflow: auto;
         background:
-          radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.85), transparent 28rem),
-          var(--page);
+          radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.95), transparent 27rem),
+          linear-gradient(135deg, #eef2f7 0%, #f8fafc 58%, #edf5f1 100%);
+        color: var(--text);
         font-family:
           Arial,
           "Noto Sans KR",
           sans-serif;
       }
 
-      main {
-        width: 100vw;
-        height: 100vh;
+      button {
+        font: inherit;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      .game-shell {
+        width: min(100vw, 1280px);
+        height: 100dvh;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) clamp(260px, 28vw, 340px);
+        gap: clamp(12px, 2vw, 32px);
+        align-items: center;
+        padding: clamp(10px, 2vw, 28px);
+      }
+
+      .map-area {
+        min-width: 0;
+        height: 100%;
         display: grid;
         place-items: center;
-        padding: clamp(12px, 2.6vw, 32px);
       }
 
       svg {
-        width: min(94vw, 760px);
-        height: min(96vh, 980px);
+        width: min(100%, 68dvh, 720px);
+        height: auto;
+        aspect-ratio: 800 / 1024;
         display: block;
         overflow: visible;
         touch-action: manipulation;
@@ -71,13 +95,119 @@
           filter 160ms ease;
       }
 
-      .piece:not(.is-locked):hover {
+      .piece:not(.is-owned):hover {
         fill: var(--piece-hover);
+      }
+
+      .piece.is-owned:hover {
+        filter: brightness(0.96);
       }
 
       .piece:focus,
       .piece:focus-visible {
         outline: none;
+      }
+
+      .score-panel {
+        width: 100%;
+        height: min(92dvh, 840px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.12);
+      }
+
+      .score-header {
+        padding: 20px 20px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .score-kicker {
+        margin: 0 0 4px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.28rem, 2vw, 1.65rem);
+        line-height: 1.25;
+      }
+
+      .ranking-list {
+        min-height: 0;
+        margin: 0;
+        padding: 8px 0;
+        overflow: auto;
+        list-style: none;
+      }
+
+      .rank-item {
+        display: grid;
+        grid-template-columns: 3.2rem 1rem minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 50px;
+        padding: 8px 18px;
+        border-bottom: 1px solid #edf0f5;
+      }
+
+      .rank-item:last-child {
+        border-bottom: 0;
+      }
+
+      .rank-number {
+        color: #2d3440;
+        font-weight: 700;
+      }
+
+      .team-swatch {
+        width: 0.92rem;
+        height: 0.92rem;
+        border: 1px solid rgba(0, 0, 0, 0.18);
+        border-radius: 50%;
+        background: var(--team-color);
+      }
+
+      .team-name {
+        min-width: 0;
+        font-weight: 700;
+      }
+
+      .team-score {
+        color: #111827;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .score-actions {
+        margin-top: auto;
+        padding: 14px 18px 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .reset-button,
+      .secondary-button {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: #242933;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .reset-button {
+        border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
+        color: var(--danger);
+      }
+
+      .reset-button:hover,
+      .secondary-button:hover {
+        filter: brightness(0.98);
       }
 
       .load-error {
@@ -88,7 +218,84 @@
         text-align: center;
       }
 
-      .is-hidden,
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        background: rgba(17, 24, 39, 0.55);
+      }
+
+      .score-dialog {
+        width: min(92vw, 430px);
+        border: 1px solid var(--line);
+        background: #ffffff;
+        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.24);
+        padding: 24px;
+        text-align: center;
+      }
+
+      .dialog-title {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 800;
+      }
+
+      .dialog-score {
+        display: block;
+        margin: 10px 0 20px;
+        font-size: clamp(2.6rem, 8vw, 4rem);
+        line-height: 1;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .team-button {
+        min-height: 44px;
+        border: 0;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .team-button:hover {
+        filter: brightness(0.96);
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        z-index: 30;
+        transform: translate(-50%, 12px);
+        opacity: 0;
+        pointer-events: none;
+        min-width: 12rem;
+        max-width: min(90vw, 30rem);
+        padding: 12px 16px;
+        background: rgba(17, 24, 39, 0.94);
+        color: #ffffff;
+        text-align: center;
+        font-size: 0.95rem;
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .toast.is-visible {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+
       .sr-only {
         position: absolute;
         width: 1px;
@@ -100,37 +307,163 @@
         white-space: nowrap;
         border: 0;
       }
+
+      @media (max-width: 520px) {
+        .rank-item {
+          grid-template-columns: 2.8rem 1rem minmax(0, 1fr) auto;
+          padding-inline: 14px;
+        }
+      }
     </style>
   </head>
   <body>
-    <main>
-      <svg
-        id="puzzle"
-        viewBox="0 0 800 1024"
-        role="img"
-        aria-labelledby="map-title map-desc"
-      >
-        <title id="map-title">한반도 137조각 퍼즐</title>
-        <desc id="map-desc">참고 SVG의 외곽선과 137개 조각을 유지한 클릭 가능한 퍼즐 지도입니다.</desc>
-        <path id="lattice" class="lattice" aria-hidden="true"></path>
-        <g id="piece-layer"></g>
-      </svg>
-      <p id="load-error" class="load-error is-hidden" role="status">
-        koreapuzzle.svg를 불러올 수 없습니다. 로컬 서버에서 index.html을 열어 주세요.
-      </p>
+    <main class="game-shell">
+      <section class="map-area" aria-label="한반도 지도">
+        <svg
+          id="puzzle"
+          viewBox="0 0 800 1024"
+          role="img"
+          aria-labelledby="map-title map-desc"
+        >
+          <title id="map-title">한반도 137조각 땅따먹기 지도</title>
+          <desc id="map-desc">참고 SVG의 외곽선과 137개 조각을 유지한 클릭 가능한 게임 지도입니다.</desc>
+          <path id="lattice" class="lattice" aria-hidden="true"></path>
+          <g id="piece-layer"></g>
+        </svg>
+        <p id="load-error" class="load-error" role="status" hidden>
+          koreapuzzle.svg를 불러올 수 없습니다. 로컬 서버에서 index.html을 열어 주세요.
+        </p>
+      </section>
+
+      <aside class="score-panel" aria-labelledby="ranking-title">
+        <header class="score-header">
+          <p class="score-kicker">팀 순위</p>
+          <h1 id="ranking-title">한반도 땅따먹기</h1>
+        </header>
+        <ol id="ranking-list" class="ranking-list"></ol>
+        <div class="score-actions">
+          <button id="reset-game" class="reset-button" type="button">게임 초기화</button>
+        </div>
+      </aside>
     </main>
+
+    <div id="score-modal" class="modal-backdrop" hidden>
+      <section
+        class="score-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-score"
+      >
+        <p id="dialog-title" class="dialog-title">획득 가능 점수</p>
+        <strong id="dialog-score" class="dialog-score">0점</strong>
+        <div id="team-buttons" class="team-grid" aria-label="팀 선택"></div>
+        <button id="close-dialog" class="secondary-button" type="button">닫기</button>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <p id="status" class="sr-only" aria-live="polite"></p>
 
     <script>
       const EXPECTED_PIECE_COUNT = 137;
+      const STORAGE_KEY = "landGameState";
       const SVG_NS = "http://www.w3.org/2000/svg";
+      const TEAM_TEMPLATE = [
+        { id: 1, name: "1조", color: "#E74C3C", score: 0 },
+        { id: 2, name: "2조", color: "#3498DB", score: 0 },
+        { id: 3, name: "3조", color: "#2ECC71", score: 0 },
+        { id: 4, name: "4조", color: "#F1C40F", score: 0 },
+        { id: 5, name: "5조", color: "#9B59B6", score: 0 },
+        { id: 6, name: "6조", color: "#E67E22", score: 0 },
+        { id: 7, name: "7조", color: "#1ABC9C", score: 0 },
+        { id: 8, name: "8조", color: "#34495E", score: 0 },
+        { id: 9, name: "9조", color: "#FF69B4", score: 0 },
+        { id: 10, name: "10조", color: "#8BC34A", score: 0 },
+      ];
 
       const puzzle = document.querySelector("#puzzle");
       const lattice = document.querySelector("#lattice");
       const pieceLayer = document.querySelector("#piece-layer");
       const loadError = document.querySelector("#load-error");
+      const rankingList = document.querySelector("#ranking-list");
+      const resetGameButton = document.querySelector("#reset-game");
+      const scoreModal = document.querySelector("#score-modal");
+      const dialogScore = document.querySelector("#dialog-score");
+      const teamButtons = document.querySelector("#team-buttons");
+      const closeDialogButton = document.querySelector("#close-dialog");
+      const toast = document.querySelector("#toast");
       const status = document.querySelector("#status");
-      const usedColors = new Set();
+      const pieceByLandId = new Map();
+
+      let activeLandId = null;
+      let toastTimer = 0;
+      let teams = createTeams();
+      let lands = {};
+
+      function createTeams() {
+        return TEAM_TEMPLATE.map((team) => ({ ...team }));
+      }
+
+      function restoreGameState() {
+        const savedState = localStorage.getItem(STORAGE_KEY);
+
+        if (!savedState) {
+          return;
+        }
+
+        try {
+          const gameState = JSON.parse(savedState);
+
+          if (Array.isArray(gameState.teams)) {
+            teams = TEAM_TEMPLATE.map((team) => {
+              const savedTeam = gameState.teams.find((item) => item.id === team.id);
+              return {
+                ...team,
+                score: Number(savedTeam?.score) || 0,
+              };
+            });
+          }
+
+          if (gameState.lands && typeof gameState.lands === "object") {
+            lands = Object.fromEntries(
+              Object.entries(gameState.lands).map(([id, land]) => {
+                const savedScore = Number(land.score);
+                const savedOwnerTeamId = Number(land.ownerTeamId);
+                const score =
+                  Number.isFinite(savedScore) && savedScore >= 10 && savedScore <= 200
+                    ? savedScore
+                    : null;
+                const ownerTeamId =
+                  score !== null && TEAM_TEMPLATE.some((team) => team.id === savedOwnerTeamId)
+                    ? savedOwnerTeamId
+                    : null;
+
+                return [
+                  id,
+                  {
+                    id,
+                    score,
+                    ownerTeamId,
+                  },
+                ];
+              }),
+            );
+          }
+        } catch (error) {
+          console.warn("Saved game state could not be restored.", error);
+        }
+      }
+
+      function saveGameState() {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            teams,
+            lands,
+          }),
+        );
+      }
 
       function splitSubpaths(pathData) {
         return pathData
@@ -140,58 +473,262 @@
           .filter(Boolean);
       }
 
-      function randomColor() {
-        let color = "";
-
-        do {
-          const hue = Math.floor(Math.random() * 360);
-          const saturation = 58 + Math.floor(Math.random() * 22);
-          const lightness = 48 + Math.floor(Math.random() * 18);
-          color = `hsl(${hue} ${saturation}% ${lightness}%)`;
-        } while (usedColors.has(color));
-
-        usedColors.add(color);
-        return color;
+      function getLandId(index) {
+        return `land-${String(index + 1).padStart(3, "0")}`;
       }
 
-      function lockPiece(piece) {
-        if (piece.classList.contains("is-locked")) {
+      function getLandNumber(landId) {
+        return Number(landId.replace("land-", ""));
+      }
+
+      function getTeamById(teamId) {
+        return teams.find((team) => team.id === teamId) || null;
+      }
+
+      function ensureLand(landId) {
+        if (!lands[landId]) {
+          lands[landId] = {
+            id: landId,
+            score: null,
+            ownerTeamId: null,
+          };
+        }
+
+        return lands[landId];
+      }
+
+      function getOrCreateLandScore(land) {
+        if (land.score === null) {
+          land.score = (Math.floor(Math.random() * 20) + 1) * 10;
+          saveGameState();
+        }
+
+        return land.score;
+      }
+
+      function getReadableTextColor(hexColor) {
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        return brightness > 154 ? "#111827" : "#ffffff";
+      }
+
+      function getTeamRanking() {
+        return [...teams].sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+
+          return a.id - b.id;
+        });
+      }
+
+      function syncTeamScoresFromLands() {
+        teams.forEach((team) => {
+          team.score = 0;
+        });
+
+        Object.values(lands).forEach((land) => {
+          const team = getTeamById(land.ownerTeamId);
+
+          if (team && land.score !== null) {
+            team.score += land.score;
+          }
+        });
+      }
+
+      function renderRanking() {
+        const rankedTeams = getTeamRanking();
+        let previousScore = null;
+        let rank = 0;
+
+        rankingList.replaceChildren(
+          ...rankedTeams.map((team, index) => {
+            if (team.score !== previousScore) {
+              rank = index + 1;
+              previousScore = team.score;
+            }
+
+            const item = document.createElement("li");
+            const rankNumber = document.createElement("span");
+            const swatch = document.createElement("span");
+            const name = document.createElement("span");
+            const score = document.createElement("span");
+
+            item.className = "rank-item";
+            item.style.setProperty("--team-color", team.color);
+            rankNumber.className = "rank-number";
+            swatch.className = "team-swatch";
+            name.className = "team-name";
+            score.className = "team-score";
+
+            rankNumber.textContent = `${rank}위`;
+            name.textContent = team.name;
+            score.textContent = `${team.score}점`;
+
+            item.append(rankNumber, swatch, name, score);
+            return item;
+          }),
+        );
+      }
+
+      function renderTeamButtons() {
+        teamButtons.replaceChildren(
+          ...teams.map((team) => {
+            const button = document.createElement("button");
+            button.className = "team-button";
+            button.type = "button";
+            button.textContent = team.name;
+            button.style.backgroundColor = team.color;
+            button.style.color = getReadableTextColor(team.color);
+            button.addEventListener("click", () => assignLandToTeam(team.id));
+            return button;
+          }),
+        );
+      }
+
+      function updateLandPiece(landId) {
+        const piece = pieceByLandId.get(landId);
+        const land = ensureLand(landId);
+        const landNumber = getLandNumber(landId);
+        const ownerTeam = getTeamById(land.ownerTeamId);
+
+        if (!piece) {
           return;
         }
 
-        const color = randomColor();
-        const number = piece.dataset.piece;
+        if (ownerTeam) {
+          piece.style.fill = ownerTeam.color;
+          piece.classList.add("is-owned");
+          piece.setAttribute(
+            "aria-label",
+            `${landNumber}번 땅, ${ownerTeam.name} 점령, ${land.score}점`,
+          );
+          return;
+        }
 
-        piece.style.fill = color;
-        piece.classList.add("is-locked");
-        piece.setAttribute("aria-disabled", "true");
-        piece.setAttribute("tabindex", "-1");
-        piece.setAttribute("aria-label", `${number}번 조각 선택됨`);
-        status.textContent = `${number}번 조각의 색상이 변경되었습니다.`;
+        piece.style.removeProperty("fill");
+        piece.classList.remove("is-owned");
+        piece.setAttribute(
+          "aria-label",
+          land.score === null ? `${landNumber}번 땅` : `${landNumber}번 땅, ${land.score}점`,
+        );
+      }
+
+      function showToast(message) {
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        status.textContent = message;
+        toastTimer = window.setTimeout(() => {
+          toast.classList.remove("is-visible");
+        }, 1800);
+      }
+
+      function openScorePopup(landId) {
+        const land = ensureLand(landId);
+        const score = getOrCreateLandScore(land);
+
+        activeLandId = landId;
+        dialogScore.textContent = `${score}점`;
+        updateLandPiece(landId);
+        scoreModal.hidden = false;
+        teamButtons.querySelector("button")?.focus();
+      }
+
+      function closeScorePopup() {
+        activeLandId = null;
+        scoreModal.hidden = true;
+      }
+
+      function handleLandSelect(piece) {
+        const landId = piece.dataset.landId;
+        const land = ensureLand(landId);
+
+        if (land.ownerTeamId !== null) {
+          showToast("이미 점령된 땅입니다.");
+          return;
+        }
+
+        openScorePopup(landId);
+      }
+
+      function assignLandToTeam(teamId) {
+        if (activeLandId === null) {
+          return;
+        }
+
+        const land = ensureLand(activeLandId);
+        const team = getTeamById(teamId);
+
+        if (!team || land.ownerTeamId !== null) {
+          showToast("이미 점령된 땅입니다.");
+          closeScorePopup();
+          return;
+        }
+
+        const score = getOrCreateLandScore(land);
+        const confirmed = window.confirm(`${score}점을 ${team.name}에 부여하시겠습니까?`);
+
+        if (!confirmed) {
+          return;
+        }
+
+        land.ownerTeamId = team.id;
+        team.score += score;
+        updateLandPiece(land.id);
+        renderRanking();
+        saveGameState();
+        closeScorePopup();
+        showToast(`${team.name}이 ${score}점을 획득했습니다.`);
       }
 
       function createPiece(pathData, index) {
         const piece = document.createElementNS(SVG_NS, "path");
-        const number = String(index + 1);
+        const landId = getLandId(index);
 
+        ensureLand(landId);
         piece.classList.add("piece");
-        piece.dataset.piece = number;
+        piece.dataset.landId = landId;
         piece.setAttribute("d", pathData);
         piece.setAttribute("role", "button");
         piece.setAttribute("tabindex", "0");
-        piece.setAttribute("aria-label", `${number}번 조각`);
-
-        piece.addEventListener("click", () => lockPiece(piece));
+        piece.addEventListener("click", () => handleLandSelect(piece));
         piece.addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") {
             return;
           }
 
           event.preventDefault();
-          lockPiece(piece);
+          handleLandSelect(piece);
         });
 
+        pieceByLandId.set(landId, piece);
+        updateLandPiece(landId);
         return piece;
+      }
+
+      function resetGame() {
+        const confirmed = window.confirm("모든 땅과 점수를 초기화하시겠습니까?");
+
+        if (!confirmed) {
+          return;
+        }
+
+        teams = createTeams();
+        lands = {};
+
+        pieceByLandId.forEach((_, landId) => {
+          ensureLand(landId);
+          updateLandPiece(landId);
+        });
+
+        localStorage.removeItem(STORAGE_KEY);
+        renderRanking();
+        closeScorePopup();
+        showToast("게임이 초기화되었습니다.");
       }
 
       async function loadPuzzle() {
@@ -222,15 +759,22 @@
           puzzle.setAttribute("viewBox", viewBox);
           lattice.setAttribute("d", subpaths.join(" "));
           pieceLayer.replaceChildren(...pieces.map(createPiece));
-
-          status.textContent = `${pieces.length}개의 퍼즐 조각이 준비되었습니다.`;
+          syncTeamScoresFromLands();
+          renderRanking();
+          saveGameState();
+          status.textContent = `${pieces.length}개의 땅 조각이 준비되었습니다.`;
         } catch (error) {
           console.error(error);
-          puzzle.classList.add("is-hidden");
-          loadError.classList.remove("is-hidden");
+          puzzle.hidden = true;
+          loadError.hidden = false;
         }
       }
 
+      restoreGameState();
+      renderRanking();
+      renderTeamButtons();
+      closeDialogButton.addEventListener("click", closeScorePopup);
+      resetGameButton.addEventListener("click", resetGame);
       loadPuzzle();
     </script>
   </body>
