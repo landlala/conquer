@@ -7,14 +7,16 @@
     <style>
       :root {
         color-scheme: light;
-        --page: #f4f6f8;
+        --page: #f3f5f8;
         --panel: #ffffff;
-        --ink: #050505;
+        --ink: #080a0d;
         --text: #171a1f;
-        --muted: #6b7280;
+        --muted: #687180;
         --line: #d9dee7;
+        --soft-line: #edf0f5;
         --piece: #ffffff;
-        --piece-hover: #eef3ff;
+        --accent: #2457d6;
+        --accent-dark: #173ea5;
         --danger: #c93333;
       }
 
@@ -29,20 +31,21 @@
       }
 
       body {
-        height: 100dvh;
-        overflow: auto;
+        min-height: 100dvh;
         background:
-          radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.95), transparent 27rem),
-          linear-gradient(135deg, #eef2f7 0%, #f8fafc 58%, #edf5f1 100%);
+          radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.98), transparent 28rem),
+          linear-gradient(135deg, #eef2f7 0%, #f9fafb 60%, #edf4f1 100%);
         color: var(--text);
-        font-family:
-          Arial,
-          "Noto Sans KR",
-          sans-serif;
+        font-family: Arial, "Noto Sans KR", sans-serif;
       }
 
       button {
         font: inherit;
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgba(36, 87, 214, 0.3);
+        outline-offset: 2px;
       }
 
       [hidden] {
@@ -50,32 +53,40 @@
       }
 
       .game-shell {
-        width: min(100vw, 1280px);
-        height: 100dvh;
+        width: min(100%, 1320px);
+        min-height: 100dvh;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: minmax(240px, 1fr) clamp(260px, 28vw, 340px);
-        gap: clamp(12px, 2vw, 32px);
+        grid-template-columns: minmax(0, 1fr) clamp(280px, 28vw, 360px);
+        gap: clamp(16px, 2.5vw, 38px);
         align-items: center;
-        padding: clamp(10px, 2vw, 28px);
+        padding: clamp(14px, 2.5vw, 32px);
+      }
+
+      .map-column {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
       }
 
       .map-area {
-        min-width: 0;
-        height: 100%;
+        width: 100%;
+        min-height: 0;
         display: grid;
         place-items: center;
       }
 
-      svg {
+      #puzzle {
         width: min(100%, 68dvh, 720px);
         height: auto;
         aspect-ratio: 800 / 1024;
         display: block;
         overflow: visible;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        filter: drop-shadow(0 14px 26px rgba(26, 31, 38, 0.12));
+        filter: drop-shadow(0 14px 26px rgba(26, 31, 38, 0.14));
       }
 
       .lattice {
@@ -87,35 +98,66 @@
       .piece {
         fill: var(--piece);
         stroke: none;
+        pointer-events: none;
+        transition: fill 180ms ease;
+      }
+
+      .region-number-image {
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .map-actions {
+        width: min(100%, 34rem);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .remaining-copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .remaining-copy strong {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .conquer-button {
+        min-width: 9.5rem;
+        min-height: 50px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+        box-shadow: 0 8px 18px rgba(36, 87, 214, 0.24);
+        color: #ffffff;
+        font-size: 1.05rem;
+        font-weight: 900;
         cursor: pointer;
-        pointer-events: visiblePainted;
-        -webkit-tap-highlight-color: transparent;
-        transition:
-          fill 160ms ease,
-          filter 160ms ease;
       }
 
-      .piece:not(.is-owned):hover {
-        fill: var(--piece-hover);
+      .conquer-button:hover {
+        filter: brightness(1.06);
       }
 
-      .piece.is-owned:hover {
-        filter: brightness(0.96);
-      }
-
-      .piece:focus,
-      .piece:focus-visible {
-        outline: none;
+      .conquer-button:disabled {
+        background: #9aa3b1;
+        box-shadow: none;
+        cursor: not-allowed;
       }
 
       .score-panel {
         width: 100%;
-        height: min(92dvh, 840px);
+        height: min(92dvh, 830px);
         display: flex;
         flex-direction: column;
         overflow: hidden;
         border: 1px solid var(--line);
-        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--panel) 96%, transparent);
         box-shadow: 0 16px 34px rgba(31, 41, 55, 0.12);
       }
 
@@ -128,7 +170,8 @@
         margin: 0 0 4px;
         color: var(--muted);
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: 800;
+        letter-spacing: 0.08em;
       }
 
       h1 {
@@ -140,19 +183,19 @@
       .ranking-list {
         min-height: 0;
         margin: 0;
-        padding: 8px 0;
+        padding: 6px 0;
         overflow: auto;
         list-style: none;
       }
 
       .rank-item {
         display: grid;
-        grid-template-columns: 3.2rem 1rem minmax(0, 1fr) auto;
-        gap: 10px;
+        grid-template-columns: 2.7rem 0.9rem minmax(0, 1fr) auto;
+        gap: 9px;
         align-items: center;
-        min-height: 50px;
-        padding: 8px 18px;
-        border-bottom: 1px solid #edf0f5;
+        min-height: 44px;
+        padding: 6px 18px;
+        border-bottom: 1px solid var(--soft-line);
       }
 
       .rank-item:last-child {
@@ -160,53 +203,66 @@
       }
 
       .rank-number {
-        color: #2d3440;
-        font-weight: 700;
+        color: #394150;
+        font-size: 0.88rem;
+        font-weight: 800;
       }
 
       .team-swatch {
-        width: 0.92rem;
-        height: 0.92rem;
+        width: 0.84rem;
+        height: 0.84rem;
         border: 1px solid rgba(0, 0, 0, 0.18);
         border-radius: 50%;
         background: var(--team-color);
       }
 
-      .team-name {
-        min-width: 0;
-        font-weight: 700;
+      .team-name,
+      .team-score {
+        font-weight: 800;
       }
 
       .team-score {
         color: #111827;
-        font-weight: 800;
         font-variant-numeric: tabular-nums;
       }
 
       .score-actions {
         margin-top: auto;
-        padding: 14px 18px 18px;
+        padding: 12px 18px 16px;
         border-top: 1px solid var(--line);
       }
 
       .reset-button,
-      .secondary-button {
-        width: 100%;
+      .secondary-button,
+      .primary-button {
         min-height: 42px;
-        border: 1px solid var(--line);
-        background: #ffffff;
-        color: #242933;
-        font-weight: 700;
+        border-radius: 8px;
+        font-weight: 800;
         cursor: pointer;
       }
 
+      .reset-button,
+      .secondary-button {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: #242933;
+      }
+
       .reset-button {
+        width: 100%;
         border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
         color: var(--danger);
       }
 
+      .primary-button {
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #ffffff;
+      }
+
       .reset-button:hover,
-      .secondary-button:hover {
+      .secondary-button:hover,
+      .primary-button:hover {
         filter: brightness(0.98);
       }
 
@@ -225,50 +281,312 @@
         display: grid;
         place-items: center;
         padding: 18px;
-        background: rgba(17, 24, 39, 0.55);
+        background: rgba(17, 24, 39, 0.62);
       }
 
-      .score-dialog {
-        width: min(92vw, 430px);
+      .conquer-dialog {
+        width: min(94vw, 820px);
+        max-height: 92dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         border: 1px solid var(--line);
+        border-radius: 14px;
         background: #ffffff;
-        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.24);
-        padding: 24px;
-        text-align: center;
+        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.26);
       }
 
-      .dialog-title {
+      .dialog-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 20px 22px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .dialog-kicker {
+        margin: 0 0 4px;
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      .dialog-heading {
         margin: 0;
+        font-size: clamp(1.25rem, 3vw, 1.65rem);
+      }
+
+      .dialog-subtitle {
+        margin: 6px 0 0;
         color: var(--muted);
         font-size: 0.9rem;
-        font-weight: 800;
       }
 
-      .dialog-score {
-        display: block;
-        margin: 10px 0 20px;
-        font-size: clamp(2.6rem, 8vw, 4rem);
+      .icon-button {
+        flex: 0 0 auto;
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #ffffff;
+        color: #3d4654;
+        font-size: 1.35rem;
         line-height: 1;
+        cursor: pointer;
+      }
+
+      .workflow-view {
+        min-height: 0;
+        overflow: auto;
+      }
+
+      .land-picker {
+        min-width: 0;
+        padding: 18px 20px 22px;
+        overflow: auto;
+      }
+
+      .picker-step-title {
+        margin: 0 0 14px;
+        font-size: 0.95rem;
         font-weight: 900;
-        font-variant-numeric: tabular-nums;
       }
 
-      .team-grid {
+      .picker-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 14px;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .legend-chip {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        background: #ffffff;
+      }
+
+      .legend-chip.is-owned {
+        background: #d7dce5;
+      }
+
+      .region-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 16px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
       }
 
-      .team-button {
-        min-height: 44px;
-        border: 0;
+      .region-button {
+        min-height: 92px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 1px solid #cfd5df;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #252b35;
+        cursor: pointer;
+      }
+
+      .region-button:hover:not(:disabled) {
+        border-color: var(--accent);
+        background: #f1f5ff;
+        transform: translateY(-1px);
+      }
+
+      .region-button:disabled {
+        border-color: #d9dde4;
+        background: #eef0f4;
+        color: #9299a5;
+        cursor: not-allowed;
+      }
+
+      .region-name {
+        font-size: 1.12rem;
+        font-weight: 900;
+      }
+
+      .region-progress {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .region-button:disabled .region-progress {
+        color: inherit;
+      }
+
+      .piece-picker-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .piece-picker-header .picker-step-title {
+        margin: 0;
+      }
+
+      .back-button {
+        min-height: 36px;
+        padding: 6px 11px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #ffffff;
+        color: #3d4654;
+        font-size: 0.82rem;
         font-weight: 800;
         cursor: pointer;
       }
 
+      .piece-grid {
+        display: grid;
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .land-button {
+        min-height: 44px;
+        padding: 7px 4px;
+        border: 1px solid #cfd5df;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #252b35;
+        font-size: 0.9rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        cursor: pointer;
+      }
+
+      .land-button:hover:not(:disabled) {
+        border-color: var(--accent);
+        background: #f1f5ff;
+      }
+
+      .land-button.is-selected {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .land-button:disabled {
+        border-color: #d9dde4;
+        background:
+          linear-gradient(135deg, transparent 45%, rgba(107, 114, 128, 0.18) 45% 55%, transparent 55%),
+          #eef0f4;
+        color: #9299a5;
+        cursor: not-allowed;
+      }
+
+      .award-panel {
+        padding: 18px 20px 22px;
+        border-top: 1px solid var(--line);
+        background: #f8f9fb;
+      }
+
+      .award-placeholder {
+        display: grid;
+        min-height: 5rem;
+        place-items: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+        text-align: center;
+      }
+
+      .selected-land {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .selected-land strong {
+        color: var(--text);
+      }
+
+      .dialog-score {
+        display: block;
+        margin: 10px 0 22px;
+        color: var(--accent-dark);
+        font-size: clamp(2.5rem, 6vw, 3.7rem);
+        line-height: 1;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+      }
+
+      .team-prompt {
+        margin: 0 0 10px;
+        font-size: 0.88rem;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .team-grid {
+        width: min(100%, 46rem);
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 7px;
+        margin: 0 auto;
+      }
+
+      .team-button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 7px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
       .team-button:hover {
-        filter: brightness(0.96);
+        filter: brightness(0.95);
+      }
+
+      .confirmation-view {
+        padding: clamp(28px, 6vw, 58px) 24px;
+        text-align: center;
+      }
+
+      .confirmation-label {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.86rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .confirmation-copy {
+        margin: 0;
+        font-size: clamp(1.2rem, 3vw, 1.55rem);
+        line-height: 1.7;
+      }
+
+      .confirmation-copy strong {
+        color: var(--accent-dark);
+      }
+
+      .confirmation-actions {
+        width: min(100%, 23rem);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 28px auto 0;
       }
 
       .toast {
@@ -282,13 +600,12 @@
         min-width: 12rem;
         max-width: min(90vw, 30rem);
         padding: 12px 16px;
-        background: rgba(17, 24, 39, 0.94);
+        border-radius: 8px;
+        background: rgba(17, 24, 39, 0.95);
         color: #ffffff;
         text-align: center;
         font-size: 0.95rem;
-        transition:
-          opacity 160ms ease,
-          transform 160ms ease;
+        transition: opacity 160ms ease, transform 160ms ease;
       }
 
       .toast.is-visible {
@@ -308,9 +625,74 @@
         border: 0;
       }
 
-      @media (max-width: 520px) {
+      @media (max-width: 820px) {
+        .game-shell {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+
+        #puzzle {
+          width: min(100%, 62dvh, 600px);
+        }
+
+        .score-panel {
+          height: auto;
+          max-height: none;
+        }
+
+        .ranking-list {
+          max-height: none;
+        }
+
+      }
+
+      @media (max-width: 560px) {
+        .game-shell {
+          padding: 12px;
+        }
+
+        .map-actions {
+          grid-template-columns: 1fr;
+        }
+
+        .remaining-copy {
+          text-align: center;
+        }
+
+        .conquer-button {
+          width: 100%;
+        }
+
+        .modal-backdrop {
+          padding: 8px;
+        }
+
+        .conquer-dialog {
+          width: 100%;
+          max-height: 96dvh;
+        }
+
+        .dialog-header {
+          padding: 16px;
+        }
+
+        .land-picker {
+          padding: 15px 12px 18px;
+        }
+
+        .region-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .piece-grid {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .team-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
         .rank-item {
-          grid-template-columns: 2.8rem 1rem minmax(0, 1fr) auto;
           padding-inline: 14px;
         }
       }
@@ -318,26 +700,40 @@
   </head>
   <body>
     <main class="game-shell">
-      <section class="map-area" aria-label="한반도 지도">
-        <svg
-          id="puzzle"
-          viewBox="0 0 800 1024"
-          role="img"
-          aria-labelledby="map-title map-desc"
-        >
-          <title id="map-title">한반도 137조각 땅따먹기 지도</title>
-          <desc id="map-desc">참고 SVG의 외곽선과 137개 조각을 유지한 클릭 가능한 게임 지도입니다.</desc>
-          <path id="lattice" class="lattice" aria-hidden="true"></path>
-          <g id="piece-layer"></g>
-        </svg>
-        <p id="load-error" class="load-error" role="status" hidden>
-          koreapuzzle.svg를 불러올 수 없습니다. 로컬 서버에서 index.html을 열어 주세요.
-        </p>
+      <section class="map-column" aria-label="점령 현황">
+        <div class="map-area">
+          <svg id="puzzle" viewBox="0 0 800 1024" role="img" aria-labelledby="map-title map-desc">
+            <title id="map-title">한반도 160조각 땅따먹기 지도</title>
+            <desc id="map-desc">8개 큰 구역과 각 구역의 20개 땅에 대한 현재 점령 현황입니다.</desc>
+            <path id="lattice" class="lattice" aria-hidden="true"></path>
+            <g id="piece-layer" aria-hidden="true"></g>
+            <g id="region-number-layer" aria-hidden="true">
+              <image class="region-number-image" href="assets/region-numbers/region-1.png" x="142" y="133" width="109" height="147" />
+              <image class="region-number-image" href="assets/region-numbers/region-2.png" x="362" y="35" width="109" height="110" />
+              <image class="region-number-image" href="assets/region-numbers/region-3.png" x="684" y="108" width="109" height="134" />
+              <image class="region-number-image" href="assets/region-numbers/region-4.png" x="116" y="470" width="109" height="134" />
+              <image class="region-number-image" href="assets/region-numbers/region-5.png" x="613" y="338" width="109" height="134" />
+              <image class="region-number-image" href="assets/region-numbers/region-6.png" x="171" y="608" width="109" height="134" />
+              <image class="region-number-image" href="assets/region-numbers/region-7.png" x="650" y="620" width="109" height="134" />
+              <image class="region-number-image" href="assets/region-numbers/region-8.png" x="311" y="888" width="109" height="134" />
+            </g>
+          </svg>
+          <p id="load-error" class="load-error" role="status" hidden>
+            file.svg를 불러올 수 없습니다. 로컬 서버에서 index.html을 열어 주세요.
+          </p>
+        </div>
+
+        <div class="map-actions">
+          <p class="remaining-copy">
+            정복 가능 <strong id="remaining-count">160</strong> / 160
+          </p>
+          <button id="open-conquer" class="conquer-button" type="button">정복</button>
+        </div>
       </section>
 
       <aside class="score-panel" aria-labelledby="ranking-title">
         <header class="score-header">
-          <p class="score-kicker">팀 순위</p>
+          <p class="score-kicker">TEAM RANKING</p>
           <h1 id="ranking-title">한반도 땅따먹기</h1>
         </header>
         <ol id="ranking-list" class="ranking-list"></ol>
@@ -347,18 +743,64 @@
       </aside>
     </main>
 
-    <div id="score-modal" class="modal-backdrop" hidden>
-      <section
-        class="score-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dialog-title"
-        aria-describedby="dialog-score"
-      >
-        <p id="dialog-title" class="dialog-title">획득 가능 점수</p>
-        <strong id="dialog-score" class="dialog-score">0점</strong>
-        <div id="team-buttons" class="team-grid" aria-label="팀 선택"></div>
-        <button id="close-dialog" class="secondary-button" type="button">닫기</button>
+    <div id="conquer-modal" class="modal-backdrop" hidden>
+      <section class="conquer-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-heading">
+        <header class="dialog-header">
+          <div>
+            <p class="dialog-kicker">CONQUER</p>
+            <h2 id="dialog-heading" class="dialog-heading">정복할 땅을 선택하세요</h2>
+            <p id="dialog-subtitle" class="dialog-subtitle">점령된 땅은 선택할 수 없습니다.</p>
+          </div>
+          <button id="close-dialog" class="icon-button" type="button" aria-label="정복 창 닫기">×</button>
+        </header>
+
+        <div id="workflow-view" class="workflow-view">
+          <section class="land-picker" aria-label="정복 가능한 땅 목록">
+            <div id="region-picker">
+              <h3 class="picker-step-title">1. 큰 구역 선택</h3>
+              <div id="region-buttons" class="region-grid"></div>
+            </div>
+
+            <div id="piece-picker" hidden>
+              <div class="piece-picker-header">
+                <h3 class="picker-step-title">
+                  2. <strong id="current-region-label">1구역</strong> 조각 선택
+                </h3>
+                <button id="back-to-regions" class="back-button" type="button">← 구역 다시 선택</button>
+              </div>
+              <div class="picker-legend" aria-hidden="true">
+                <span class="legend-item"><span class="legend-chip"></span>선택 가능</span>
+                <span class="legend-item"><span class="legend-chip is-owned"></span>점령 완료</span>
+              </div>
+              <div id="piece-buttons" class="piece-grid"></div>
+            </div>
+          </section>
+
+          <aside id="award-panel" class="award-panel" aria-label="점수와 팀 선택" hidden>
+            <div id="award-placeholder" class="award-placeholder">
+              <p>위에서 조각을 하나 선택하세요.</p>
+            </div>
+            <div id="award-controls" hidden>
+              <p class="selected-land"><strong id="selected-land-label">1-1</strong> 땅의 점수</p>
+              <strong id="dialog-score" class="dialog-score">0점</strong>
+              <p class="team-prompt">점수를 받을 팀 선택</p>
+              <div id="team-buttons" class="team-grid" aria-label="팀 선택"></div>
+            </div>
+          </aside>
+        </div>
+
+        <div id="confirmation-view" class="confirmation-view" hidden>
+          <p class="confirmation-label">최종 확인</p>
+          <p class="confirmation-copy">
+            <strong id="confirm-land">3-12 땅</strong><br />
+            <strong id="confirm-score">140점</strong>을<br />
+            <strong id="confirm-team">5조</strong>에게 부여하시겠습니까?
+          </p>
+          <div class="confirmation-actions">
+            <button id="cancel-confirm" class="secondary-button" type="button">취소</button>
+            <button id="confirm-award" class="primary-button" type="button">확인</button>
+          </div>
+        </div>
       </section>
     </div>
 
@@ -366,43 +808,115 @@
     <p id="status" class="sr-only" aria-live="polite"></p>
 
     <script>
-      const EXPECTED_PIECE_COUNT = 137;
+      const REGION_COUNT = 8;
+      const PIECES_PER_REGION = 20;
+      const EXPECTED_PIECE_COUNT = REGION_COUNT * PIECES_PER_REGION;
       const STORAGE_KEY = "landGameState";
       const SVG_NS = "http://www.w3.org/2000/svg";
       const TEAM_TEMPLATE = [
-        { id: 1, name: "1조", color: "#E74C3C", score: 0 },
-        { id: 2, name: "2조", color: "#3498DB", score: 0 },
-        { id: 3, name: "3조", color: "#2ECC71", score: 0 },
-        { id: 4, name: "4조", color: "#F1C40F", score: 0 },
-        { id: 5, name: "5조", color: "#9B59B6", score: 0 },
-        { id: 6, name: "6조", color: "#E67E22", score: 0 },
-        { id: 7, name: "7조", color: "#1ABC9C", score: 0 },
-        { id: 8, name: "8조", color: "#34495E", score: 0 },
-        { id: 9, name: "9조", color: "#FF69B4", score: 0 },
-        { id: 10, name: "10조", color: "#8BC34A", score: 0 },
+        { id: 1, name: "1조", color: "#E63946", score: 0 },
+        { id: 2, name: "2조", color: "#3A86FF", score: 0 },
+        { id: 3, name: "3조", color: "#2A9D8F", score: 0 },
+        { id: 4, name: "4조", color: "#F4C430", score: 0 },
+        { id: 5, name: "5조", color: "#8338EC", score: 0 },
+        { id: 6, name: "6조", color: "#F77F00", score: 0 },
+        { id: 7, name: "7조", color: "#00A6A6", score: 0 },
+        { id: 8, name: "8조", color: "#264653", score: 0 },
+        { id: 9, name: "9조", color: "#FF5D8F", score: 0 },
+        { id: 10, name: "10조", color: "#7CB518", score: 0 },
+        { id: 11, name: "11조", color: "#9C6644", score: 0 },
+        { id: 12, name: "12조", color: "#00B4D8", score: 0 },
+        { id: 13, name: "13조", color: "#C2185B", score: 0 },
+        { id: 14, name: "14조", color: "#6B7280", score: 0 },
       ];
+      const REGION_PATH_INDEXES = [
+        [1, 8, 10, 11, 14, 35, 49, 60, 80, 87, 98, 100, 102, 104, 115, 123, 126, 134, 145, 146],
+        [2, 4, 17, 30, 34, 38, 58, 61, 62, 63, 64, 75, 93, 96, 103, 109, 113, 129, 137, 153],
+        [3, 16, 25, 28, 36, 59, 65, 69, 71, 77, 79, 81, 99, 118, 121, 128, 140, 142, 147, 151],
+        [21, 29, 37, 40, 42, 45, 51, 57, 74, 111, 114, 120, 130, 138, 139, 144, 148, 152, 156, 159],
+        [9, 18, 20, 23, 26, 32, 44, 47, 54, 56, 67, 82, 88, 91, 97, 108, 112, 124, 141, 160],
+        [33, 43, 50, 66, 68, 70, 85, 101, 105, 106, 107, 119, 125, 127, 132, 143, 149, 154, 155, 158],
+        [6, 12, 13, 15, 24, 27, 31, 41, 48, 55, 72, 83, 84, 90, 110, 116, 117, 122, 131, 135],
+        [5, 7, 19, 22, 39, 46, 52, 53, 73, 76, 78, 86, 89, 92, 94, 95, 133, 136, 150, 157],
+      ];
+      const LAND_ID_BY_PATH_INDEX = Array(EXPECTED_PIECE_COUNT);
+
+      REGION_PATH_INDEXES.forEach((pathIndexes, regionIndex) => {
+        pathIndexes.forEach((pathIndex, pieceIndex) => {
+          LAND_ID_BY_PATH_INDEX[pathIndex - 1] = `${regionIndex + 1}-${pieceIndex + 1}`;
+        });
+      });
+
+      if (
+        REGION_PATH_INDEXES.some((pathIndexes) => pathIndexes.length !== PIECES_PER_REGION) ||
+        new Set(REGION_PATH_INDEXES.flat()).size !== EXPECTED_PIECE_COUNT ||
+        REGION_PATH_INDEXES.flat().some(
+          (pathIndex) => pathIndex < 1 || pathIndex > EXPECTED_PIECE_COUNT,
+        ) ||
+        LAND_ID_BY_PATH_INDEX.includes(undefined)
+      ) {
+        throw new Error("Region-to-SVG path mapping is invalid.");
+      }
 
       const puzzle = document.querySelector("#puzzle");
       const lattice = document.querySelector("#lattice");
       const pieceLayer = document.querySelector("#piece-layer");
       const loadError = document.querySelector("#load-error");
       const rankingList = document.querySelector("#ranking-list");
+      const remainingCount = document.querySelector("#remaining-count");
+      const openConquerButton = document.querySelector("#open-conquer");
       const resetGameButton = document.querySelector("#reset-game");
-      const scoreModal = document.querySelector("#score-modal");
+      const conquerModal = document.querySelector("#conquer-modal");
+      const closeDialogButton = document.querySelector("#close-dialog");
+      const dialogHeading = document.querySelector("#dialog-heading");
+      const dialogSubtitle = document.querySelector("#dialog-subtitle");
+      const workflowView = document.querySelector("#workflow-view");
+      const confirmationView = document.querySelector("#confirmation-view");
+      const regionPicker = document.querySelector("#region-picker");
+      const regionButtons = document.querySelector("#region-buttons");
+      const piecePicker = document.querySelector("#piece-picker");
+      const currentRegionLabel = document.querySelector("#current-region-label");
+      const backToRegionsButton = document.querySelector("#back-to-regions");
+      const pieceButtons = document.querySelector("#piece-buttons");
+      const awardPanel = document.querySelector("#award-panel");
+      const awardPlaceholder = document.querySelector("#award-placeholder");
+      const awardControls = document.querySelector("#award-controls");
+      const selectedLandLabel = document.querySelector("#selected-land-label");
       const dialogScore = document.querySelector("#dialog-score");
       const teamButtons = document.querySelector("#team-buttons");
-      const closeDialogButton = document.querySelector("#close-dialog");
+      const confirmLand = document.querySelector("#confirm-land");
+      const confirmScore = document.querySelector("#confirm-score");
+      const confirmTeam = document.querySelector("#confirm-team");
+      const cancelConfirmButton = document.querySelector("#cancel-confirm");
+      const confirmAwardButton = document.querySelector("#confirm-award");
       const toast = document.querySelector("#toast");
       const status = document.querySelector("#status");
       const pieceByLandId = new Map();
 
+      let currentRegion = null;
       let activeLandId = null;
+      let pendingTeamId = null;
       let toastTimer = 0;
       let teams = createTeams();
-      let lands = {};
+      let lands = createLands();
 
       function createTeams() {
         return TEAM_TEMPLATE.map((team) => ({ ...team }));
+      }
+
+      function getLandId(index) {
+        return LAND_ID_BY_PATH_INDEX[index];
+      }
+
+      function createLands() {
+        return Object.fromEntries(
+          Array.from({ length: REGION_COUNT }, (_, regionIndex) =>
+            Array.from({ length: PIECES_PER_REGION }, (_, pieceIndex) => {
+              const id = `${regionIndex + 1}-${pieceIndex + 1}`;
+              return [id, { id, score: null, ownerTeamId: null }];
+            }),
+          ).flat(),
+        );
       }
 
       function restoreGameState() {
@@ -415,86 +929,46 @@
         try {
           const gameState = JSON.parse(savedState);
 
-          if (Array.isArray(gameState.teams)) {
-            teams = TEAM_TEMPLATE.map((team) => {
-              const savedTeam = gameState.teams.find((item) => item.id === team.id);
-              return {
-                ...team,
-                score: Number(savedTeam?.score) || 0,
-              };
-            });
+          if (!gameState.lands || typeof gameState.lands !== "object") {
+            return;
           }
 
-          if (gameState.lands && typeof gameState.lands === "object") {
-            lands = Object.fromEntries(
-              Object.entries(gameState.lands).map(([id, land]) => {
-                const savedScore = Number(land.score);
-                const savedOwnerTeamId = Number(land.ownerTeamId);
-                const score =
-                  Number.isFinite(savedScore) && savedScore >= 10 && savedScore <= 200
-                    ? savedScore
-                    : null;
-                const ownerTeamId =
-                  score !== null && TEAM_TEMPLATE.some((team) => team.id === savedOwnerTeamId)
-                    ? savedOwnerTeamId
-                    : null;
+          Object.keys(lands).forEach((id) => {
+            const savedLand = gameState.lands[id];
 
-                return [
-                  id,
-                  {
-                    id,
-                    score,
-                    ownerTeamId,
-                  },
-                ];
-              }),
-            );
-          }
+            if (!savedLand) {
+              return;
+            }
+
+            const savedScore = Number(savedLand.score);
+            const savedOwnerTeamId = Number(savedLand.ownerTeamId);
+            const scoreIsValid =
+              Number.isInteger(savedScore) &&
+              savedScore >= 10 &&
+              savedScore <= 200 &&
+              savedScore % 10 === 0;
+            const ownerIsValid = TEAM_TEMPLATE.some((team) => team.id === savedOwnerTeamId);
+
+            lands[id].score = scoreIsValid ? savedScore : null;
+            lands[id].ownerTeamId = scoreIsValid && ownerIsValid ? savedOwnerTeamId : null;
+          });
         } catch (error) {
           console.warn("Saved game state could not be restored.", error);
         }
       }
 
       function saveGameState() {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            teams,
-            lands,
-          }),
-        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ teams, lands }));
       }
 
       function splitSubpaths(pathData) {
-        return pathData
-          .trim()
-          .match(/M[\s\S]*?(?=\s*M|$)/g)
+        return (pathData.trim().match(/M[\s\S]*?(?=\s*M|$)/g) || [])
           .map((path) => path.trim())
           .filter(Boolean);
       }
 
-      function getLandId(index) {
-        return `land-${String(index + 1).padStart(3, "0")}`;
-      }
-
-      function getLandNumber(landId) {
-        return Number(landId.replace("land-", ""));
-      }
-
       function getTeamById(teamId) {
         return teams.find((team) => team.id === teamId) || null;
-      }
-
-      function ensureLand(landId) {
-        if (!lands[landId]) {
-          lands[landId] = {
-            id: landId,
-            score: null,
-            ownerTeamId: null,
-          };
-        }
-
-        return lands[landId];
       }
 
       function getOrCreateLandScore(land) {
@@ -511,7 +985,6 @@
         const g = parseInt(hexColor.slice(3, 5), 16);
         const b = parseInt(hexColor.slice(5, 7), 16);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-
         return brightness > 154 ? "#111827" : "#ffffff";
       }
 
@@ -540,17 +1013,8 @@
       }
 
       function renderRanking() {
-        const rankedTeams = getTeamRanking();
-        let previousScore = null;
-        let rank = 0;
-
         rankingList.replaceChildren(
-          ...rankedTeams.map((team, index) => {
-            if (team.score !== previousScore) {
-              rank = index + 1;
-              previousScore = team.score;
-            }
-
+          ...getTeamRanking().map((team, index) => {
             const item = document.createElement("li");
             const rankNumber = document.createElement("span");
             const swatch = document.createElement("span");
@@ -564,7 +1028,8 @@
             name.className = "team-name";
             score.className = "team-score";
 
-            rankNumber.textContent = `${rank}위`;
+            rankNumber.textContent = `${index + 1}위`;
+            swatch.setAttribute("aria-label", `${team.name} 색상`);
             name.textContent = team.name;
             score.textContent = `${team.score}점`;
 
@@ -583,38 +1048,107 @@
             button.textContent = team.name;
             button.style.backgroundColor = team.color;
             button.style.color = getReadableTextColor(team.color);
-            button.addEventListener("click", () => assignLandToTeam(team.id));
+            button.addEventListener("click", () => openConfirmation(team.id));
             return button;
           }),
         );
       }
 
+      function getRegionLands(region) {
+        return Array.from({ length: PIECES_PER_REGION }, (_, index) => lands[`${region}-${index + 1}`]);
+      }
+
+      function renderRegionButtons() {
+        regionButtons.replaceChildren(
+          ...Array.from({ length: REGION_COUNT }, (_, index) => {
+            const region = index + 1;
+            const regionLands = getRegionLands(region);
+            const remaining = regionLands.filter((land) => land.ownerTeamId === null).length;
+            const button = document.createElement("button");
+            const name = document.createElement("span");
+            const progress = document.createElement("span");
+
+            button.className = "region-button";
+            button.type = "button";
+            button.disabled = remaining === 0;
+            name.className = "region-name";
+            progress.className = "region-progress";
+            name.textContent = `${region}구역`;
+            progress.textContent = remaining === 0 ? "정복 완료" : `남은 조각 ${remaining} / 20`;
+            button.setAttribute(
+              "aria-label",
+              remaining === 0 ? `${region}구역 정복 완료` : `${region}구역 선택, 남은 조각 ${remaining}개`,
+            );
+
+            if (remaining > 0) {
+              button.addEventListener("click", () => selectRegion(region));
+            }
+
+            button.append(name, progress);
+            return button;
+          }),
+        );
+      }
+
+      function renderPieceButtons() {
+        if (currentRegion === null) {
+          pieceButtons.replaceChildren();
+          return;
+        }
+
+        pieceButtons.replaceChildren(
+          ...getRegionLands(currentRegion).map((land, index) => {
+            const pieceNumber = index + 1;
+            const ownerTeam = getTeamById(land.ownerTeamId);
+            const button = document.createElement("button");
+
+            button.className = "land-button";
+            button.type = "button";
+            button.textContent = String(pieceNumber);
+            button.disabled = ownerTeam !== null;
+            button.dataset.landId = land.id;
+
+            if (land.id === activeLandId) {
+              button.classList.add("is-selected");
+            }
+
+            if (ownerTeam) {
+              button.title = `${ownerTeam.name} 점령 완료 (${land.score}점)`;
+              button.setAttribute("aria-label", `${land.id} 땅, ${ownerTeam.name} 점령 완료`);
+            } else {
+              button.setAttribute("aria-label", `${land.id} 땅 선택`);
+              button.addEventListener("click", () => selectLand(land.id));
+            }
+
+            return button;
+          }),
+        );
+      }
+
+      function updateRemainingCount() {
+        const remaining = Object.values(lands).filter((land) => land.ownerTeamId === null).length;
+        remainingCount.textContent = String(remaining);
+        openConquerButton.disabled = remaining === 0;
+        openConquerButton.textContent = remaining === 0 ? "정복 완료" : "정복";
+      }
+
       function updateLandPiece(landId) {
         const piece = pieceByLandId.get(landId);
-        const land = ensureLand(landId);
-        const landNumber = getLandNumber(landId);
+        const land = lands[landId];
         const ownerTeam = getTeamById(land.ownerTeamId);
 
-        if (!piece) {
+        if (!piece || !land) {
           return;
         }
 
         if (ownerTeam) {
           piece.style.fill = ownerTeam.color;
-          piece.classList.add("is-owned");
-          piece.setAttribute(
-            "aria-label",
-            `${landNumber}번 땅, ${ownerTeam.name} 점령, ${land.score}점`,
-          );
+          piece.dataset.ownerTeamId = String(ownerTeam.id);
           return;
         }
 
         piece.style.removeProperty("fill");
-        piece.classList.remove("is-owned");
-        piece.setAttribute(
-          "aria-label",
-          land.score === null ? `${landNumber}번 땅` : `${landNumber}번 땅, ${land.score}점`,
-        );
+        delete piece.dataset.ownerTeamId;
       }
 
       function showToast(message) {
@@ -627,113 +1161,180 @@
         }, 1800);
       }
 
-      function openScorePopup(landId) {
-        const land = ensureLand(landId);
-        const score = getOrCreateLandScore(land);
+      function showWorkflowView() {
+        workflowView.hidden = false;
+        confirmationView.hidden = true;
+
+        if (currentRegion === null) {
+          dialogHeading.textContent = "정복할 구역을 선택하세요";
+          dialogSubtitle.textContent = "8개의 큰 구역 중 하나를 먼저 선택합니다.";
+        } else {
+          dialogHeading.textContent = `${currentRegion}구역에서 조각을 선택하세요`;
+          dialogSubtitle.textContent = "이미 점령된 조각은 선택할 수 없습니다.";
+        }
+      }
+
+      function showRegionPicker() {
+        currentRegion = null;
+        activeLandId = null;
+        pendingTeamId = null;
+        regionPicker.hidden = false;
+        piecePicker.hidden = true;
+        awardPanel.hidden = true;
+        awardPlaceholder.hidden = false;
+        awardControls.hidden = true;
+        renderRegionButtons();
+        showWorkflowView();
+      }
+
+      function selectRegion(region) {
+        const remaining = getRegionLands(region).filter((land) => land.ownerTeamId === null).length;
+
+        if (remaining === 0) {
+          showToast("이 구역은 정복이 완료되었습니다.");
+          renderRegionButtons();
+          return;
+        }
+
+        currentRegion = region;
+        activeLandId = null;
+        pendingTeamId = null;
+        currentRegionLabel.textContent = `${region}구역`;
+        regionPicker.hidden = true;
+        piecePicker.hidden = false;
+        awardPanel.hidden = false;
+        awardPlaceholder.hidden = false;
+        awardControls.hidden = true;
+        renderPieceButtons();
+        showWorkflowView();
+        pieceButtons.querySelector("button:not(:disabled)")?.focus();
+      }
+
+      function backToRegions() {
+        showRegionPicker();
+        regionButtons.querySelector("button:not(:disabled)")?.focus();
+      }
+
+      function openConquerModal() {
+        showRegionPicker();
+        conquerModal.hidden = false;
+        regionButtons.querySelector("button:not(:disabled)")?.focus();
+      }
+
+      function closeConquerModal() {
+        currentRegion = null;
+        activeLandId = null;
+        pendingTeamId = null;
+        conquerModal.hidden = true;
+        openConquerButton.focus();
+      }
+
+      function selectLand(landId) {
+        const land = lands[landId];
+
+        if (!land || land.ownerTeamId !== null) {
+          showToast("이미 점령된 땅입니다.");
+          return;
+        }
 
         activeLandId = landId;
-        dialogScore.textContent = `${score}점`;
-        updateLandPiece(landId);
-        scoreModal.hidden = false;
-        teamButtons.querySelector("button")?.focus();
+        pendingTeamId = null;
+        selectedLandLabel.textContent = landId;
+        dialogScore.textContent = `${getOrCreateLandScore(land)}점`;
+        awardPlaceholder.hidden = true;
+        awardControls.hidden = false;
+        renderPieceButtons();
+        status.textContent = `${landId} 땅은 ${land.score}점입니다. 점수를 받을 팀을 선택하세요.`;
       }
 
-      function closeScorePopup() {
-        activeLandId = null;
-        scoreModal.hidden = true;
-      }
-
-      function handleLandSelect(piece) {
-        const landId = piece.dataset.landId;
-        const land = ensureLand(landId);
-
-        if (land.ownerTeamId !== null) {
-          showToast("이미 점령된 땅입니다.");
-          return;
-        }
-
-        openScorePopup(landId);
-      }
-
-      function assignLandToTeam(teamId) {
-        if (activeLandId === null) {
-          return;
-        }
-
-        const land = ensureLand(activeLandId);
+      function openConfirmation(teamId) {
+        const land = lands[activeLandId];
         const team = getTeamById(teamId);
 
-        if (!team || land.ownerTeamId !== null) {
-          showToast("이미 점령된 땅입니다.");
-          closeScorePopup();
+        if (!land || !team || land.ownerTeamId !== null) {
+          showToast("정복할 땅을 다시 선택해 주세요.");
+          showWorkflowView();
+          renderPieceButtons();
           return;
         }
 
-        const score = getOrCreateLandScore(land);
-        const confirmed = window.confirm(`${score}점을 ${team.name}에 부여하시겠습니까?`);
+        pendingTeamId = team.id;
+        confirmLand.textContent = `${land.id} 땅`;
+        confirmScore.textContent = `${land.score}점`;
+        confirmTeam.textContent = team.name;
+        workflowView.hidden = true;
+        confirmationView.hidden = false;
+        dialogHeading.textContent = "정복 내용을 확인하세요";
+        dialogSubtitle.textContent = "확인을 누르면 지도와 순위가 즉시 갱신됩니다.";
+        confirmAwardButton.focus();
+      }
 
-        if (!confirmed) {
+      function cancelConfirmation() {
+        const selectedTeamButton = teamButtons.children[pendingTeamId - 1];
+        pendingTeamId = null;
+        showWorkflowView();
+        selectedTeamButton?.focus();
+      }
+
+      function confirmAward() {
+        const land = lands[activeLandId];
+        const team = getTeamById(pendingTeamId);
+
+        if (!land || !team || land.ownerTeamId !== null) {
+          showToast("정복 정보를 확인할 수 없습니다.");
+          closeConquerModal();
           return;
         }
 
         land.ownerTeamId = team.id;
-        team.score += score;
+        syncTeamScoresFromLands();
         updateLandPiece(land.id);
         renderRanking();
+        updateRemainingCount();
         saveGameState();
-        closeScorePopup();
-        showToast(`${team.name}이 ${score}점을 획득했습니다.`);
+        closeConquerModal();
+        showToast(`${land.id} 땅을 ${team.name}이 정복해 ${land.score}점을 획득했습니다.`);
       }
 
       function createPiece(pathData, index) {
         const piece = document.createElementNS(SVG_NS, "path");
         const landId = getLandId(index);
 
-        ensureLand(landId);
         piece.classList.add("piece");
         piece.dataset.landId = landId;
+        piece.dataset.region = landId.split("-")[0];
         piece.setAttribute("d", pathData);
-        piece.setAttribute("role", "button");
-        piece.setAttribute("tabindex", "0");
-        piece.addEventListener("click", () => handleLandSelect(piece));
-        piece.addEventListener("keydown", (event) => {
-          if (event.key !== "Enter" && event.key !== " ") {
-            return;
-          }
-
-          event.preventDefault();
-          handleLandSelect(piece);
-        });
-
+        piece.setAttribute("aria-label", `${landId} 땅`);
         pieceByLandId.set(landId, piece);
         updateLandPiece(landId);
         return piece;
       }
 
       function resetGame() {
-        const confirmed = window.confirm("모든 땅과 점수를 초기화하시겠습니까?");
+        const confirmed = window.confirm("모든 땅의 소유권과 점수를 초기화하시겠습니까?");
 
         if (!confirmed) {
           return;
         }
 
         teams = createTeams();
-        lands = {};
-
-        pieceByLandId.forEach((_, landId) => {
-          ensureLand(landId);
-          updateLandPiece(landId);
-        });
-
+        lands = createLands();
+        currentRegion = null;
+        activeLandId = null;
+        pendingTeamId = null;
+        pieceByLandId.forEach((_, landId) => updateLandPiece(landId));
         localStorage.removeItem(STORAGE_KEY);
         renderRanking();
-        closeScorePopup();
+        renderRegionButtons();
+        renderPieceButtons();
+        updateRemainingCount();
+        closeConquerModal();
         showToast("게임이 초기화되었습니다.");
       }
 
       async function loadPuzzle() {
         try {
-          const response = await fetch("koreapuzzle.svg", { cache: "no-store" });
+          const response = await fetch("file.svg", { cache: "no-store" });
 
           if (!response.ok) {
             throw new Error(`SVG load failed: ${response.status}`);
@@ -748,21 +1349,17 @@
             throw new Error("SVG path not found");
           }
 
-          const viewBox = sourceSvg.getAttribute("viewBox") || "0 0 800 1024";
-          const subpaths = splitSubpaths(sourcePath.getAttribute("d"));
-          const pieces = subpaths.slice(1);
+          const subpaths = splitSubpaths(sourcePath.getAttribute("d") || "");
+          const pieces = subpaths.slice(1, EXPECTED_PIECE_COUNT + 1);
 
           if (pieces.length !== EXPECTED_PIECE_COUNT) {
-            console.warn(`Expected ${EXPECTED_PIECE_COUNT} pieces, found ${pieces.length}.`);
+            throw new Error(`Expected ${EXPECTED_PIECE_COUNT} pieces, found ${pieces.length}.`);
           }
 
-          puzzle.setAttribute("viewBox", viewBox);
+          puzzle.setAttribute("viewBox", sourceSvg.getAttribute("viewBox") || "0 0 800 1024");
           lattice.setAttribute("d", subpaths.join(" "));
           pieceLayer.replaceChildren(...pieces.map(createPiece));
-          syncTeamScoresFromLands();
-          renderRanking();
-          saveGameState();
-          status.textContent = `${pieces.length}개의 땅 조각이 준비되었습니다.`;
+          status.textContent = "160개의 땅 조각이 준비되었습니다.";
         } catch (error) {
           console.error(error);
           puzzle.hidden = true;
@@ -771,10 +1368,35 @@
       }
 
       restoreGameState();
+      syncTeamScoresFromLands();
       renderRanking();
       renderTeamButtons();
-      closeDialogButton.addEventListener("click", closeScorePopup);
+      renderRegionButtons();
+      updateRemainingCount();
+
+      openConquerButton.addEventListener("click", openConquerModal);
+      closeDialogButton.addEventListener("click", closeConquerModal);
+      backToRegionsButton.addEventListener("click", backToRegions);
+      cancelConfirmButton.addEventListener("click", cancelConfirmation);
+      confirmAwardButton.addEventListener("click", confirmAward);
       resetGameButton.addEventListener("click", resetGame);
+      conquerModal.addEventListener("click", (event) => {
+        if (event.target === conquerModal) {
+          closeConquerModal();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || conquerModal.hidden) {
+          return;
+        }
+
+        if (!confirmationView.hidden) {
+          cancelConfirmation();
+        } else {
+          closeConquerModal();
+        }
+      });
+
       loadPuzzle();
     </script>
   </body>
