@@ -339,7 +339,9 @@
 
       .workflow-view {
         min-height: 0;
-        overflow: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
       }
 
       .land-picker {
@@ -493,14 +495,31 @@
       }
 
       .award-panel {
+        min-height: 270px;
+        overflow: hidden;
         padding: 18px 20px 22px;
         border-top: 1px solid var(--line);
         background: #f8f9fb;
       }
 
+      .award-panel.is-high-score {
+        animation: high-score-panel 1100ms ease-out;
+      }
+
+      #award-controls {
+        min-height: 229px;
+        position: relative;
+        isolation: isolate;
+      }
+
+      #award-controls > :not(.score-effect) {
+        position: relative;
+        z-index: 1;
+      }
+
       .award-placeholder {
         display: grid;
-        min-height: 5rem;
+        min-height: 229px;
         place-items: center;
         color: var(--muted);
         font-size: 0.9rem;
@@ -520,9 +539,17 @@
         color: var(--text);
       }
 
+      .score-state {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
       .dialog-score {
         display: block;
-        margin: 10px 0 22px;
+        margin: 0;
         color: var(--accent-dark);
         font-size: clamp(2.5rem, 6vw, 3.7rem);
         line-height: 1;
@@ -531,11 +558,134 @@
         text-align: center;
       }
 
+      .score-display {
+        height: 82px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        margin: 2px 0 10px;
+        padding: 8px 18px;
+      }
+
+      .dialog-score.is-rolling {
+        color: var(--accent);
+        animation: score-roulette 120ms ease-in-out infinite alternate;
+      }
+
+      .score-state.is-high-score,
+      .dialog-score.is-high-score {
+        color: #b45309;
+      }
+
+      .dialog-score.is-high-score {
+        text-shadow: 0 0 18px rgba(251, 192, 45, 0.68);
+        animation: high-score-pop 850ms cubic-bezier(0.2, 1.5, 0.35, 1);
+      }
+
+      .score-effect {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .score-effect.is-active {
+        opacity: 1;
+      }
+
+      .score-effect span {
+        position: absolute;
+        top: 36%;
+        left: 50%;
+        width: 10px;
+        height: 10px;
+        opacity: 0;
+        background: #f9a825;
+        transform: translate(-50%, -50%) rotate(45deg) scale(0);
+      }
+
+      .score-effect span:nth-child(even) {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #fdd835;
+      }
+
+      .score-effect.is-active span {
+        animation: score-spark 900ms ease-out var(--delay) forwards;
+      }
+
+      @keyframes score-roulette {
+        from {
+          transform: scale(0.94);
+          opacity: 0.72;
+        }
+
+        to {
+          transform: scale(1.06);
+          opacity: 1;
+        }
+      }
+
+      @keyframes high-score-panel {
+        0%,
+        100% {
+          background: #f8f9fb;
+        }
+
+        30% {
+          background: #fff6c7;
+        }
+      }
+
+      @keyframes high-score-pop {
+        0% {
+          transform: scale(0.72);
+        }
+
+        55% {
+          transform: scale(1.18);
+        }
+
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes score-spark {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) rotate(45deg) scale(0);
+        }
+
+        25% {
+          opacity: 1;
+        }
+
+        100% {
+          opacity: 0;
+          transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(225deg)
+            scale(0.35);
+        }
+      }
+
       .team-prompt {
         margin: 0 0 10px;
         font-size: 0.88rem;
         font-weight: 900;
         text-align: center;
+      }
+
+      .team-selection-controls {
+        min-height: 104px;
+        visibility: visible;
+      }
+
+      .team-selection-controls.is-pending {
+        visibility: hidden;
+        pointer-events: none;
       }
 
       .team-grid {
@@ -556,6 +706,15 @@
 
       .team-button:hover {
         filter: brightness(0.95);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .dialog-score.is-rolling,
+        .dialog-score.is-high-score,
+        .award-panel.is-high-score,
+        .score-effect.is-active span {
+          animation: none;
+        }
       }
 
       .confirmation-view {
@@ -781,10 +940,33 @@
               <p>위에서 조각을 하나 선택하세요.</p>
             </div>
             <div id="award-controls" hidden>
+              <div id="score-effect" class="score-effect" aria-hidden="true">
+                <span style="--x: -155px; --y: -55px; --delay: 0ms"></span>
+                <span style="--x: -105px; --y: -90px; --delay: 60ms"></span>
+                <span style="--x: -55px; --y: -105px; --delay: 110ms"></span>
+                <span style="--x: 0px; --y: -115px; --delay: 30ms"></span>
+                <span style="--x: 60px; --y: -105px; --delay: 90ms"></span>
+                <span style="--x: 115px; --y: -82px; --delay: 20ms"></span>
+                <span style="--x: 155px; --y: -45px; --delay: 130ms"></span>
+                <span style="--x: -145px; --y: 35px; --delay: 100ms"></span>
+                <span style="--x: -85px; --y: 70px; --delay: 20ms"></span>
+                <span style="--x: 80px; --y: 70px; --delay: 120ms"></span>
+                <span style="--x: 135px; --y: 42px; --delay: 50ms"></span>
+                <span style="--x: 35px; --y: 88px; --delay: 150ms"></span>
+              </div>
               <p class="selected-land"><strong id="selected-land-label">1-1</strong> 땅의 점수</p>
-              <strong id="dialog-score" class="dialog-score">0점</strong>
-              <p class="team-prompt">점수를 받을 팀 선택</p>
-              <div id="team-buttons" class="team-grid" aria-label="팀 선택"></div>
+              <p id="score-state" class="score-state" role="status">점수 추첨 중...</p>
+              <div class="score-display">
+                <strong id="dialog-score" class="dialog-score">0점</strong>
+              </div>
+              <div
+                id="team-selection-controls"
+                class="team-selection-controls is-pending"
+                aria-hidden="true"
+              >
+                <p class="team-prompt">점수를 받을 팀 선택</p>
+                <div id="team-buttons" class="team-grid" aria-label="팀 선택"></div>
+              </div>
             </div>
           </aside>
         </div>
@@ -813,21 +995,23 @@
       const EXPECTED_PIECE_COUNT = REGION_COUNT * PIECES_PER_REGION;
       const STORAGE_KEY = "landGameState";
       const SVG_NS = "http://www.w3.org/2000/svg";
+      const SCORE_ROULETTE_DURATION = 2000;
+      const SCORE_ROULETTE_TICK = 80;
       const TEAM_TEMPLATE = [
-        { id: 1, name: "1조", color: "#E63946", score: 0 },
-        { id: 2, name: "2조", color: "#3A86FF", score: 0 },
-        { id: 3, name: "3조", color: "#2A9D8F", score: 0 },
-        { id: 4, name: "4조", color: "#F4C430", score: 0 },
-        { id: 5, name: "5조", color: "#8338EC", score: 0 },
-        { id: 6, name: "6조", color: "#F77F00", score: 0 },
-        { id: 7, name: "7조", color: "#00A6A6", score: 0 },
-        { id: 8, name: "8조", color: "#264653", score: 0 },
-        { id: 9, name: "9조", color: "#FF5D8F", score: 0 },
-        { id: 10, name: "10조", color: "#7CB518", score: 0 },
-        { id: 11, name: "11조", color: "#9C6644", score: 0 },
-        { id: 12, name: "12조", color: "#00B4D8", score: 0 },
-        { id: 13, name: "13조", color: "#C2185B", score: 0 },
-        { id: 14, name: "14조", color: "#6B7280", score: 0 },
+        { id: 1, name: "1조", color: "#C62828", score: 0 },
+        { id: 2, name: "2조", color: "#1565C0", score: 0 },
+        { id: 3, name: "3조", color: "#1B5E20", score: 0 },
+        { id: 4, name: "4조", color: "#FDD835", score: 0 },
+        { id: 5, name: "5조", color: "#8E24AA", score: 0 },
+        { id: 6, name: "6조", color: "#E65100", score: 0 },
+        { id: 7, name: "7조", color: "#00BFA5", score: 0 },
+        { id: 8, name: "8조", color: "#0D2A63", score: 0 },
+        { id: 9, name: "9조", color: "#FF5C93", score: 0 },
+        { id: 10, name: "10조", color: "#8BC34A", score: 0 },
+        { id: 11, name: "11조", color: "#A66A3F", score: 0 },
+        { id: 12, name: "12조", color: "#29B6F6", score: 0 },
+        { id: 13, name: "13조", color: "#263238", score: 0 },
+        { id: 14, name: "14조", color: "#B0BEC5", score: 0 },
       ];
       const REGION_PATH_INDEXES = [
         [1, 8, 10, 11, 14, 35, 49, 60, 80, 87, 98, 100, 102, 104, 115, 123, 126, 134, 145, 146],
@@ -882,7 +1066,10 @@
       const awardPlaceholder = document.querySelector("#award-placeholder");
       const awardControls = document.querySelector("#award-controls");
       const selectedLandLabel = document.querySelector("#selected-land-label");
+      const scoreState = document.querySelector("#score-state");
       const dialogScore = document.querySelector("#dialog-score");
+      const scoreEffect = document.querySelector("#score-effect");
+      const teamSelectionControls = document.querySelector("#team-selection-controls");
       const teamButtons = document.querySelector("#team-buttons");
       const confirmLand = document.querySelector("#confirm-land");
       const confirmScore = document.querySelector("#confirm-score");
@@ -897,6 +1084,10 @@
       let activeLandId = null;
       let pendingTeamId = null;
       let toastTimer = 0;
+      let scoreRouletteInterval = 0;
+      let scoreRouletteTimeout = 0;
+      let scoreRouletteGeneration = 0;
+      let highScoreEffectTimeout = 0;
       let teams = createTeams();
       let lands = createLands();
 
@@ -973,11 +1164,15 @@
 
       function getOrCreateLandScore(land) {
         if (land.score === null) {
-          land.score = (Math.floor(Math.random() * 20) + 1) * 10;
+          land.score = getRandomScore();
           saveGameState();
         }
 
         return land.score;
+      }
+
+      function getRandomScore() {
+        return (Math.floor(Math.random() * 20) + 1) * 10;
       }
 
       function getReadableTextColor(hexColor) {
@@ -1161,6 +1356,76 @@
         }, 1800);
       }
 
+      function clearHighScoreEffect() {
+        window.clearTimeout(highScoreEffectTimeout);
+        highScoreEffectTimeout = 0;
+        awardPanel.classList.remove("is-high-score");
+        scoreState.classList.remove("is-high-score");
+        dialogScore.classList.remove("is-high-score");
+        scoreEffect.classList.remove("is-active");
+      }
+
+      function playHighScoreEffect() {
+        clearHighScoreEffect();
+        void scoreEffect.offsetWidth;
+        awardPanel.classList.add("is-high-score");
+        scoreState.classList.add("is-high-score");
+        dialogScore.classList.add("is-high-score");
+        scoreEffect.classList.add("is-active");
+        highScoreEffectTimeout = window.setTimeout(clearHighScoreEffect, 1400);
+      }
+
+      function stopScoreRoulette() {
+        clearHighScoreEffect();
+        scoreRouletteGeneration += 1;
+        window.clearInterval(scoreRouletteInterval);
+        window.clearTimeout(scoreRouletteTimeout);
+        scoreRouletteInterval = 0;
+        scoreRouletteTimeout = 0;
+        dialogScore.classList.remove("is-rolling");
+      }
+
+      function startScoreRoulette(land) {
+        stopScoreRoulette();
+        const generation = scoreRouletteGeneration;
+
+        scoreState.textContent = "점수 추첨 중...";
+        teamSelectionControls.classList.add("is-pending");
+        teamSelectionControls.setAttribute("aria-hidden", "true");
+        dialogScore.classList.add("is-rolling");
+
+        const showTemporaryScore = () => {
+          dialogScore.textContent = `${getRandomScore()}점`;
+        };
+
+        showTemporaryScore();
+        scoreRouletteInterval = window.setInterval(showTemporaryScore, SCORE_ROULETTE_TICK);
+        scoreRouletteTimeout = window.setTimeout(() => {
+          if (generation !== scoreRouletteGeneration || activeLandId !== land.id) {
+            return;
+          }
+
+          window.clearInterval(scoreRouletteInterval);
+          scoreRouletteInterval = 0;
+          scoreRouletteTimeout = 0;
+          dialogScore.classList.remove("is-rolling");
+          const finalScore = getOrCreateLandScore(land);
+
+          dialogScore.textContent = `${finalScore}점`;
+          scoreState.textContent = finalScore >= 100 ? "고득점!" : "최종 점수";
+          teamSelectionControls.classList.remove("is-pending");
+          teamSelectionControls.setAttribute("aria-hidden", "false");
+
+          if (finalScore >= 100) {
+            playHighScoreEffect();
+          }
+
+          status.textContent = `${land.id} 땅은 ${finalScore}점${
+            finalScore >= 100 ? "의 고득점" : ""
+          }입니다. 점수를 받을 팀을 선택하세요.`;
+        }, SCORE_ROULETTE_DURATION);
+      }
+
       function showWorkflowView() {
         workflowView.hidden = false;
         confirmationView.hidden = true;
@@ -1175,6 +1440,7 @@
       }
 
       function showRegionPicker() {
+        stopScoreRoulette();
         currentRegion = null;
         activeLandId = null;
         pendingTeamId = null;
@@ -1196,6 +1462,7 @@
           return;
         }
 
+        stopScoreRoulette();
         currentRegion = region;
         activeLandId = null;
         pendingTeamId = null;
@@ -1222,6 +1489,7 @@
       }
 
       function closeConquerModal() {
+        stopScoreRoulette();
         currentRegion = null;
         activeLandId = null;
         pendingTeamId = null;
@@ -1240,18 +1508,23 @@
         activeLandId = landId;
         pendingTeamId = null;
         selectedLandLabel.textContent = landId;
-        dialogScore.textContent = `${getOrCreateLandScore(land)}점`;
         awardPlaceholder.hidden = true;
         awardControls.hidden = false;
         renderPieceButtons();
-        status.textContent = `${landId} 땅은 ${land.score}점입니다. 점수를 받을 팀을 선택하세요.`;
+        status.textContent = `${landId} 땅의 점수를 추첨하고 있습니다.`;
+        startScoreRoulette(land);
       }
 
       function openConfirmation(teamId) {
         const land = lands[activeLandId];
         const team = getTeamById(teamId);
 
-        if (!land || !team || land.ownerTeamId !== null) {
+        if (
+          !land ||
+          !team ||
+          land.ownerTeamId !== null ||
+          teamSelectionControls.classList.contains("is-pending")
+        ) {
           showToast("정복할 땅을 다시 선택해 주세요.");
           showWorkflowView();
           renderPieceButtons();
