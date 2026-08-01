@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>한반도 땅따먹기</title>
+    <title>정복 전쟁</title>
     <style>
       :root {
         color-scheme: light;
@@ -32,11 +32,36 @@
 
       body {
         min-height: 100dvh;
-        background:
-          radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.98), transparent 28rem),
-          linear-gradient(135deg, #eef2f7 0%, #f9fafb 60%, #edf4f1 100%);
+        overflow-x: hidden;
+        background: linear-gradient(180deg, #c9f3fb 0%, #8edff1 46%, #62c6e5 100%);
         color: var(--text);
         font-family: Arial, "Noto Sans KR", sans-serif;
+        isolation: isolate;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      body::before {
+        background: linear-gradient(180deg, rgba(239, 253, 255, 0.12), rgba(17, 141, 188, 0.08));
+      }
+
+      body::after {
+        box-shadow: inset 0 0 140px rgba(9, 104, 148, 0.12);
+      }
+
+      .water-background {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: #9addf7 url("assets/background/sky-blue-water-2d.png") center / cover no-repeat;
       }
 
       button {
@@ -53,6 +78,8 @@
       }
 
       .game-shell {
+        position: relative;
+        z-index: 2;
         width: min(100%, 1320px);
         min-height: 100dvh;
         margin: 0 auto;
@@ -113,6 +140,12 @@
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 12px;
         align-items: center;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.64);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 10px 24px rgba(18, 116, 158, 0.12);
+        backdrop-filter: blur(10px);
       }
 
       .remaining-copy {
@@ -155,10 +188,11 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        border: 1px solid var(--line);
+        border: 1px solid rgba(255, 255, 255, 0.72);
         border-radius: 14px;
-        background: color-mix(in srgb, var(--panel) 96%, transparent);
-        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.12);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 16px 34px rgba(18, 104, 145, 0.16);
+        backdrop-filter: blur(14px);
       }
 
       .score-header {
@@ -715,6 +749,7 @@
         .score-effect.is-active span {
           animation: none;
         }
+
       }
 
       .confirmation-view {
@@ -858,11 +893,13 @@
     </style>
   </head>
   <body>
+    <div class="water-background" aria-hidden="true"></div>
+
     <main class="game-shell">
       <section class="map-column" aria-label="점령 현황">
         <div class="map-area">
           <svg id="puzzle" viewBox="0 0 800 1024" role="img" aria-labelledby="map-title map-desc">
-            <title id="map-title">한반도 160조각 땅따먹기 지도</title>
+            <title id="map-title">정복 전쟁 한반도 160조각 지도</title>
             <desc id="map-desc">8개 큰 구역과 각 구역의 20개 땅에 대한 현재 점령 현황입니다.</desc>
             <path id="lattice" class="lattice" aria-hidden="true"></path>
             <g id="piece-layer" aria-hidden="true"></g>
@@ -893,7 +930,7 @@
       <aside class="score-panel" aria-labelledby="ranking-title">
         <header class="score-header">
           <p class="score-kicker">TEAM RANKING</p>
-          <h1 id="ranking-title">한반도 땅따먹기</h1>
+          <h1 id="ranking-title">정복 전쟁</h1>
         </header>
         <ol id="ranking-list" class="ranking-list"></ol>
         <div class="score-actions">
@@ -997,6 +1034,10 @@
       const SVG_NS = "http://www.w3.org/2000/svg";
       const SCORE_ROULETTE_DURATION = 2000;
       const SCORE_ROULETTE_TICK = 80;
+      const SCORE_MIN = 100;
+      const SCORE_MAX = 200;
+      const SCORE_STEP = 10;
+      const HIGH_SCORE_VALUES = new Set([180, 190, 200]);
       const TEAM_TEMPLATE = [
         { id: 1, name: "1조", color: "#C62828", score: 0 },
         { id: 2, name: "2조", color: "#1565C0", score: 0 },
@@ -1133,15 +1174,16 @@
 
             const savedScore = Number(savedLand.score);
             const savedOwnerTeamId = Number(savedLand.ownerTeamId);
-            const scoreIsValid =
+            const legacyScoreIsValid =
               Number.isInteger(savedScore) &&
               savedScore >= 10 &&
-              savedScore <= 200 &&
-              savedScore % 10 === 0;
+              savedScore <= SCORE_MAX &&
+              savedScore % SCORE_STEP === 0;
             const ownerIsValid = TEAM_TEMPLATE.some((team) => team.id === savedOwnerTeamId);
+            const normalizedScore = legacyScoreIsValid ? Math.max(SCORE_MIN, savedScore) : null;
 
-            lands[id].score = scoreIsValid ? savedScore : null;
-            lands[id].ownerTeamId = scoreIsValid && ownerIsValid ? savedOwnerTeamId : null;
+            lands[id].score = normalizedScore;
+            lands[id].ownerTeamId = normalizedScore !== null && ownerIsValid ? savedOwnerTeamId : null;
           });
         } catch (error) {
           console.warn("Saved game state could not be restored.", error);
@@ -1172,7 +1214,12 @@
       }
 
       function getRandomScore() {
-        return (Math.floor(Math.random() * 20) + 1) * 10;
+        const scoreOptionCount = (SCORE_MAX - SCORE_MIN) / SCORE_STEP + 1;
+        return SCORE_MIN + Math.floor(Math.random() * scoreOptionCount) * SCORE_STEP;
+      }
+
+      function isHighScore(score) {
+        return HIGH_SCORE_VALUES.has(score);
       }
 
       function getReadableTextColor(hexColor) {
@@ -1410,18 +1457,19 @@
           scoreRouletteTimeout = 0;
           dialogScore.classList.remove("is-rolling");
           const finalScore = getOrCreateLandScore(land);
+          const highScore = isHighScore(finalScore);
 
           dialogScore.textContent = `${finalScore}점`;
-          scoreState.textContent = finalScore >= 100 ? "고득점!" : "최종 점수";
+          scoreState.textContent = highScore ? "고득점!" : "최종 점수";
           teamSelectionControls.classList.remove("is-pending");
           teamSelectionControls.setAttribute("aria-hidden", "false");
 
-          if (finalScore >= 100) {
+          if (highScore) {
             playHighScoreEffect();
           }
 
           status.textContent = `${land.id} 땅은 ${finalScore}점${
-            finalScore >= 100 ? "의 고득점" : ""
+            highScore ? "의 고득점" : ""
           }입니다. 점수를 받을 팀을 선택하세요.`;
         }, SCORE_ROULETTE_DURATION);
       }
